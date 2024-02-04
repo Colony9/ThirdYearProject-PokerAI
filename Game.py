@@ -8,7 +8,7 @@ class Player():
         self.folded = False
     
     def playCall(self, value):
-        if value == 0:
+        if value == self.bet:
             print(self.name + " checks")
             return
 
@@ -24,7 +24,7 @@ class Player():
             print(self.name + " goes all in")
             self.bet = self.chips
         else:
-            print(self.name + " raises " + str(value))
+            print(self.name + " raises to " + str(value))
             self.bet = value
 
     def playFold(self):
