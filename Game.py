@@ -11,13 +11,13 @@ class Player():
         self.bet = 0
         self.hand_strength = [0, 0, 0]
         self.folded = False
-        self.called = False
+        self.last_move = None
     
     #If a player calls, their wager is set to the current betting value or
     #nothing changes in the event of a 'check'.
     #Invalid values for calls will be handled in the betting round itself.
     def playCall(self, value):
-        self.called = True
+        self.last_move = "call"
         if value == self.bet:
             print(self.name + " checks")
             return
@@ -32,7 +32,8 @@ class Player():
     
     #If a player raises, their wager is set to the value they raised to.
     #Invalid values for raises will be handled in the betting round itself.
-    def playRaise(self, value):       
+    def playRaise(self, value):
+        self.last_move = "raise"
         if value >= self.chips:
             print(self.name + " goes all in")
             self.bet = self.chips
@@ -51,7 +52,7 @@ class Player():
 #This class represents a human player and takes user inputs for decisions,
 #unlike AI.
 class humanPlayer(Player):
-    def choice(self, wager_value):
+    def choice(self, opponents, wager_value):
         while True:
             #A user is input is taken and split into 2 to determine their move.
             decision = input("What is your move? ").split(None, 2)
@@ -82,19 +83,31 @@ class humanPlayer(Player):
                 #If the user's move was to raise, it is checked whether they can
                 #and if their raising value is valid.
                 case "raise":
+                    #If the player previously raised, and no other opponent
+                    #has raised in between, then they can not raise again.
+                    if self.last_move == "raise":
+                        num_called = 0
+                        for opp in opponents:
+                            if opp.last_move == "call":
+                                num_called += 1
+                    
+                        if num_called == len(opponents):
+                            print("Invalid: Can not reraise")
+                            continue
+                    
                     #The second part of the user's input is cast to an integer.
                     #If this fails, the user has not inputted a valid wager and
                     #is rejected.
                     try:
                         wager = int(decision[1])
                     except:
-                        print("Error: Invalid wager value")
+                        print("Invalid: Invalid wager value")
                         continue
                     
                     #If the user has attempted to raise to a value lower than
                     #the highest opponent bet, it is invalid and rejected.
                     if wager <= wager_value:
-                        print("Error: Wager too low")
+                        print("Invalid: Wager too low")
                         continue
                     #If the user has fewer chips than needed to exceed the
                     #wager value, they are forced to call by going all in.
@@ -192,7 +205,7 @@ class Round():
                 #The number of players whose last move was 'call' is calculated.
                 num_called = 0
                 for i in players:
-                    if i.called:
+                    if i.last_move == "call":
                         num_called += 1
                 
                 #If either all but one players have folded or all players have
@@ -203,7 +216,9 @@ class Round():
                 
                 #The current player makes their move, based on the current
                 #wager value.
-                wager_value = p.choice(wager_value)
+                opponents = list(players)
+                opponents.remove(p)
+                wager_value = p.choice(opponents, wager_value)
                 #If the current player folds, this is tracked.
                 if p.folded:
                     num_folded += 1
