@@ -1,0 +1,71 @@
+import unittest
+import sys
+sys.path.append('..')
+from Game import Player, Round
+
+class testRound(unittest.TestCase):
+    
+    def setUp(self):
+        self.round = Round()
+        self.round.deck = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+        
+        self.player1 = Player("First Player", 500)
+        self.player2 = Player("Second Player", 1000)
+    
+    def testDealPlayer(self):
+        self.round.dealPlayer(self.player1, 3)
+        self.assertEqual(len(self.player1.pocket), 3)
+        self.assertEqual(self.round.deck_top, 3)
+        
+        self.round.dealPlayer(self.player2, 3)
+        self.assertEqual(len(self.player2.pocket), 3)
+        self.assertEqual(self.round.deck_top, 6)
+    
+    def testDealCommunity(self):
+        self.round.dealCommunity(3)
+        self.assertEqual(len(self.round.community_cards), 3)
+        self.assertEqual(self.round.deck_top, 3)
+        
+        self.round.dealCommunity(1)
+        self.assertEqual(len(self.round.community_cards), 4)
+        self.assertEqual(self.round.deck_top, 4)
+        self.round.dealCommunity(1)
+        
+        self.assertEqual(len(self.round.community_cards), 5)
+        self.assertEqual(self.round.deck_top, 5)
+        
+    def testDealNegative(self):
+        self.round.dealPlayer(self.player1, -2)
+        self.assertEqual(len(self.player1.pocket), 0)
+        self.assertEqual(self.round.deck_top, 0)
+        
+        self.round.dealCommunity(-2)
+        self.assertEqual(len(self.round.community_cards), 0)
+        self.assertEqual(self.round.deck_top, 0)
+    
+    def testCollectBets(self):
+        self.player1.playRaise(200)
+        self.player2.playCall(200)
+        self.player1.playCall(200)
+        
+        self.round.collectBets([self.player1, self.player2])
+        self.assertEqual(self.round.pot, 400)
+        self.assertEqual(self.player1.chips, 300)
+        self.assertEqual(self.player2.chips, 800)
+    
+    def testCollectBetsNegative(self):
+        self.player1.bet = -100
+        self.player2.bet = 100
+        self.round.collectBets([self.player1, self.player2])
+        self.assertEqual(self.round.pot, 100)
+    
+    def testPayout(self):
+        self.round.pot = 400
+        self.round.payout(self.player1)
+        self.assertEqual(self.player1.chips, 900)
+        self.assertEqual(self.round.pot, 0)
+
+if __name__ == '__main__':
+    unittest.main()
+    
+        
