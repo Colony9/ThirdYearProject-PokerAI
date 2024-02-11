@@ -57,6 +57,11 @@ class testHandEvaluator(unittest.TestCase):
         self.community = [(2, "Spades"), (3, "Hearts"), (3, "Clubs"), (7, "Diamonds"), (14, "Spades")]
         testHand, _ = evaluateAllHands(self.pocket, self.community)
         self.assertEqual(testHand, (6, 2, 3))
+        
+    def testFullHouse_FourOfAKind(self):
+        self.hand = [(14, "Diamonds"), (14, "Hearts"), (14, "Clubs"), (14, "Spades"), (7, "Diamonds")]
+        testHand = checkFullHouse(self.hand)
+        self.assertEqual(testHand, (0, 0, 0))
     
     def testFourOfAKind(self):
         self.pocket = [(14, "Diamonds"), (7, "Spades"), (12, "Diamonds")]

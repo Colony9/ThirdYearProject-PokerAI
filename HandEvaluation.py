@@ -166,9 +166,6 @@ def checkFourOfAKind(hand):
 
 #This function checks to see if the hand is a 'full house,' containing a three
 #of a kind and a separate pair.
-#A Four of a Kind would also return a hand from this function but, as a
-#Four of a Kind has already been checked for, this wouldn't be called on a
-#Four of a Kind.
 def checkFullHouse(hand):
     triple_value = 0
     pair_value = 0
@@ -178,6 +175,8 @@ def checkFullHouse(hand):
     for c in range(len(hand) - 1): 
         if hand[c][0] == hand[c+1][0]:
             matches += 1
+            if matches == 3:
+                return (0, 0, 0)
         else:
             #If exactly two consecutive comparisons produce a matching value, 
             #then it is a three of a kind.
