@@ -1,3 +1,5 @@
+import random
+
 #The Player class represents both human and AI players, containing methods 
 #representing each choice available for them.
 class Player():
@@ -133,8 +135,9 @@ class humanPlayer(Player):
 class Round():
     #The Round class contains the shuffled deck, a pseudo-pointer for the top 
     #of the deck, the value of the current pot, and the community cards.
-    def __init__(self):
-        self.deck = []
+    def __init__(self, deck):
+        self.deck = deck
+        random.shuffle(self.deck)
         self.deck_top = 0
         self.pot = 0
         self.community_cards = []
@@ -228,7 +231,7 @@ class Round():
 if __name__ == "__main__":
     a = humanPlayer("A", 500)
     b = humanPlayer("B", 500)
-    r = Round()
+    r = Round([1,2,3])
     r.bettingRound([a, b])
     print(a.bet)
         

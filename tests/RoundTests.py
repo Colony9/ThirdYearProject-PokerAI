@@ -2,13 +2,12 @@ import unittest
 import sys
 sys.path.append('..')
 from Game import Player, Round
+from Deck import full_deck
 
 class testRound(unittest.TestCase):
     
     def setUp(self):
-        self.round = Round()
-        self.round.deck = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-        
+        self.round = Round(full_deck)       
         self.player1 = Player("First Player", 500)
         self.player2 = Player("Second Player", 1000)
     
