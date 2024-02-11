@@ -7,9 +7,9 @@ from Deck import full_deck
 class testRound(unittest.TestCase):
     
     def setUp(self):
-        self.round = Round(full_deck)       
         self.player1 = Player("First Player", 500)
         self.player2 = Player("Second Player", 1000)
+        self.round = Round([self.player1, self.player2], full_deck)
     
     #This test checks that the 'dealPlayer' method correctly assigns cards from
     #the deck to the player's pocket and moves the 'deck_top' marker forward by
@@ -57,7 +57,7 @@ class testRound(unittest.TestCase):
         self.player2.playCall(200)
         self.player1.playCall(200)
         
-        self.round.collectBets([self.player1, self.player2])
+        self.round.collectBets()
         self.assertEqual(self.round.pot, 400)
         self.assertEqual(self.player1.chips, 300)
         self.assertEqual(self.player2.chips, 800)
@@ -67,14 +67,16 @@ class testRound(unittest.TestCase):
     def testCollectBetsNegative(self):
         self.player1.bet = -100
         self.player2.bet = 100
-        self.round.collectBets([self.player1, self.player2])
+        self.round.collectBets()
         self.assertEqual(self.round.pot, 100)
     
     #This test checks that the 'payout' method correctly adds the pot's value
     #to the winning player's chips before setting the pot to 0.
     def testPayout(self):
         self.round.pot = 400
-        self.round.payout(self.player1)
+        self.player1.hand_strength = (8,7,6)
+        self.player2.hand_strength = (1,3,7)
+        self.round.payout()
         self.assertEqual(self.player1.chips, 900)
         self.assertEqual(self.round.pot, 0)
 

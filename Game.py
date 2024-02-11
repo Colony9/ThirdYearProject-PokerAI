@@ -135,7 +135,8 @@ class humanPlayer(Player):
 class Round():
     #The Round class contains the shuffled deck, a pseudo-pointer for the top 
     #of the deck, the value of the current pot, and the community cards.
-    def __init__(self, deck):
+    def __init__(self, players, deck):
+        self.players = players
         self.deck = deck
         random.shuffle(self.deck)
         self.deck_top = 0
@@ -161,15 +162,15 @@ class Round():
             return
         
         for i in range(0, numCards):
-            self.community_cards.append(self.deck_top + i)
+            self.community_cards.append(self.deck[self.deck_top + i])
         
         self.deck_top += numCards
         return
 
     #After each round of betting, the players' wagers will be removed from 
     #their chips and added to the pot.
-    def collectBets(self, players):
-        for p in players:
+    def collectBets(self):
+        for p in self.players:
             if p.bet < 0:
                 p.bet = 0
             self.pot += p.bet
@@ -180,59 +181,76 @@ class Round():
     
     #At the end of the game, the winning player has the pot's chips added to
     #their own.
-    def payout(self, player):
-        player.chips += self.pot
+    def payout(self):
+        winner = None
+        if self.players[0].folded == True:
+            winner = self.players[1]
+        elif self.players[1].folded == True:
+            winner = self.players[0]    
+        
+        if winner is None:
+            print("Test")
+            for i in range(len(self.players[0].hand_strength)):
+                if self.players[0].hand_strength[i] > self.players[1].hand_strength[i]:
+                    winner = self.players[0]
+                    break
+                elif self.players[0].hand_strength[i] < self.players[1].hand_strength[i]:
+                    winner = self.players[1]
+                    break
+        
+        
+        if winner is None:
+            print("Tie!")
+            self.players[0].chips += self.pot / 2
+            self.players[1].chips += self.pot / 2
+            return
+        
+        print("The winner is: " + winner.name)
+        winner.chips += self.pot
         self.pot = 0
         return
 
     #Between the dealing of cards, players engage in a round of betting,
     #facilitated by this method
-    def bettingRound(self, players):
+    def bettingRound(self):
         #The initial wager of each round is 0, allowing any raise value or check.
         wager_value = 0
         #The number of folded players is tracked so that the round ends if only
         #1 player hasn't folded.
         num_folded = 0
-        for p in players:
+        for p in self.players:
             if p.folded:
                 num_folded += 1
 
         #The betting round endlessly iterates between players until 1 of 2
         #possible conditions is met.
         while True:
-            for p in players:
+            for p in self.players:
                 #If a player is folded, their turn is skipped.
                 if p.folded:
                     continue
                 
                 #The number of players whose last move was 'call' is calculated.
                 num_called = 0
-                for i in players:
+                for i in self.players:
                     if i.last_move == "call":
                         num_called += 1
                 
                 #If either all but one players have folded or all players have
                 #called, the round ends.
-                if (num_folded == len(players) - 1 or 
-                    num_called == len(players)):
+                if (num_folded == len(self.players) - 1 or 
+                    num_called == len(self.players)):
+                    for i in self.players:
+                        i.last_move = None
                     return
                 
                 #The current player makes their move, based on the current
                 #wager value.
-                opponents = list(players)
+                opponents = list(self.players)
                 opponents.remove(p)
                 wager_value = p.choice(opponents, wager_value)
                 #If the current player folds, this is tracked.
                 if p.folded:
                     num_folded += 1
-                    
-                    
-
-if __name__ == "__main__":
-    a = humanPlayer("A", 500)
-    b = humanPlayer("B", 500)
-    r = Round([1,2,3])
-    r.bettingRound([a, b])
-    print(a.bet)
         
         
