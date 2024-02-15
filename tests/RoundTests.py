@@ -28,6 +28,7 @@ class testRound(unittest.TestCase):
     def testDealCommunity(self):
         self.round.dealCommunity(3)
         self.assertEqual(len(self.round.community_cards), 3)
+        self.assertEqual(len(self.round.community_cards[0]), 2)
         self.assertEqual(self.round.deck_top, 3)
         
         self.round.dealCommunity(1)
