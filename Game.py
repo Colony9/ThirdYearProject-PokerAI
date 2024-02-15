@@ -1,4 +1,5 @@
 import random
+from HandEvaluation import evaluateAllHands
 
 #The Player class represents both human and AI players, containing methods 
 #representing each choice available for them.
@@ -54,9 +55,14 @@ class Player():
 #This class represents a human player and takes user inputs for decisions,
 #unlike AI.
 class humanPlayer(Player):
+    def assess(self, game):
+        self.hand_strength, _ = evaluateAllHands(self.pocket, game.community_cards)
+        
     def choice(self, opponents, wager_value):
         while True:
             #A user is input is taken and split into 2 to determine their move.
+            print("Chips: " + str(self.chips - self.bet))
+            print("Current Bet: " + str(self.bet))
             decision = input("What is your move? ").split(None, 2)
             move = decision[0].lower()
             #If the user inputs "bet", this is corrected to "raise"
@@ -225,6 +231,7 @@ class Round():
         #The betting round endlessly iterates between players until 1 of 2
         #possible conditions is met.
         while True:
+            print('\n')
             for p in self.players:
                 #If a player is folded, their turn is skipped.
                 if p.folded:
