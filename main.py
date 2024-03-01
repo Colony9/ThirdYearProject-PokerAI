@@ -16,7 +16,6 @@ def playRound(players):
     print("\n\n\n\n\n")
     round_manager.dealCommunity(3)
     for p in players:
-        print(p.name)
         p.assess(round_manager)
     print("Community cards: " + renderCards(round_manager.community_cards))
     print("Your cards: " + renderCards(players[0].pocket))
@@ -26,8 +25,7 @@ def playRound(players):
 
     print("\n\n\n\n\n")
     round_manager.dealCommunity(1)
-    for p in players:
-        
+    for p in players:        
         p.assess(round_manager)
     print("Community cards: " + renderCards(round_manager.community_cards))
     print("Your cards: " + renderCards(players[0].pocket))
