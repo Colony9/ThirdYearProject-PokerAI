@@ -8,6 +8,7 @@ def playRound(players):
     
     for p in players:
         round_manager.dealPlayer(p, 3)
+        p.assess(round_manager)
     print("Your cards: " + renderCards(players[0].pocket))
     round_manager.bettingRound()
     round_manager.collectBets()
@@ -15,6 +16,7 @@ def playRound(players):
     print("\n\n\n\n\n")
     round_manager.dealCommunity(3)
     for p in players:
+        print(p.name)
         p.assess(round_manager)
     print("Community cards: " + renderCards(round_manager.community_cards))
     print("Your cards: " + renderCards(players[0].pocket))
@@ -25,6 +27,7 @@ def playRound(players):
     print("\n\n\n\n\n")
     round_manager.dealCommunity(1)
     for p in players:
+        
         p.assess(round_manager)
     print("Community cards: " + renderCards(round_manager.community_cards))
     print("Your cards: " + renderCards(players[0].pocket))
@@ -65,6 +68,13 @@ if __name__ == "__main__":
             opponent = BasicAIPlayers.AIplayer_AlwaysAllIn("Dummy", 1000)
         case 4:
             opponent = BasicAIPlayers.AIplayer_FoldIfNoPair("Dummy", 1000)
+        case 5:
+            opponent = BasicAIPlayers.AIplayer_CallUpToHalf("Dummy", 1000)
         case _:
             opponent = BasicAIPlayers.AIplayer_AlwaysCall("Dummy", 1000)
-    playRound([user, opponent])
+
+    while True:
+        playRound([user, opponent])
+        replay = input("Would you like to play another round? ")
+        if (replay.lower())[0] != 'y':
+            break

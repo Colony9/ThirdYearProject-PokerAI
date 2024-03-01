@@ -64,3 +64,24 @@ class AIplayer_FoldIfNoPair(Player):
         
         self.playCall(wager_value)
         return wager_value
+
+#This AI player will always call up to half of the chips it starts the round with.
+#It will fold if it is forced to bet more than half of the chips it had at the 
+#start of the round.    
+class AIplayer_CallUpToHalf(Player):   
+    def assess(self, r):
+        self.hand_strength, _ = evaluateAllHands(self.pocket, r.community_cards)
+        self.community_number = len(r.community_cards)
+        
+        if self.community_number == 0:
+            self.limit = self.chips / 2
+        print(self.limit)
+        print(self.chips)
+    
+    def choice(self, opponents, wager_value):
+        if ((self.chips + self.bet) - wager_value) < self.limit:
+            self.playFold()
+            return wager_value
+        
+        self.playCall(wager_value)
+        return wager_value
