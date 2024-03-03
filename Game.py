@@ -195,7 +195,6 @@ class Round():
             winner = self.players[0]    
         
         if winner is None:
-            print("Test")
             for i in range(len(self.players[0].hand_strength)):
                 if self.players[0].hand_strength[i] > self.players[1].hand_strength[i]:
                     winner = self.players[0]
@@ -207,13 +206,20 @@ class Round():
         
         if winner is None:
             print("Tie!")
-            self.players[0].chips += self.pot / 2
-            self.players[1].chips += self.pot / 2
+            self.players[0].chips += self.pot // 2
+            self.players[1].chips += self.pot // 2
+            if (self.pot % 2 != 0):
+                self.players[0].chips += 1
             return
         
         print("The winner is: " + winner.name)
         winner.chips += self.pot
         self.pot = 0
+
+        for p in self.players:
+            self.hand_strength = [0, 0, 0]
+            p.folded = False
+            p.pocket.clear()
         return
 
     #Between the dealing of cards, players engage in a round of betting,
