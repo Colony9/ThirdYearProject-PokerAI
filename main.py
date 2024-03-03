@@ -75,6 +75,9 @@ if __name__ == "__main__":
         playRound([user, opponent])
         print(user.name + " chips: " + str(user.chips))
         print(opponent.name + " chips: " + str(opponent.chips) + '\n')
+        if (user.chips == 0 or opponent.chips == 0):
+            print("Out of chips to wager!")
+            break
         replay = input("Would you like to play another round? ")
         if (replay.lower())[0] != 'y':
             break
