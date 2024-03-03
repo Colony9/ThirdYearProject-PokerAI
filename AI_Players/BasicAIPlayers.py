@@ -14,9 +14,9 @@ class AIplayer_Random(Player):
         decision_num = random.randint(1, 21)
         #The AI player only has a 5% chance of folding, to reduce the odds of
         #unneccessarily folding early on.
-        if decision_num == 1:
+        if decision_num <= 2 and self.bet != wager_value:
             self.playFold()
-        elif decision_num > 11 and self.last_move != "raise":
+        elif decision_num > 11 and self.last_move != "raise" and wager_value < self.chips:
             #If the AI decides to raise, the amount it raises to is a random
             #value in the valid range of wager_value to all of its chips
             raise_value = random.randint(wager_value, self.chips + 1)
@@ -75,8 +75,6 @@ class AIplayer_CallUpToHalf(Player):
         
         if self.community_number == 0:
             self.limit = self.chips / 2
-        print(self.limit)
-        print(self.chips)
     
     def choice(self, opponents, wager_value):
         if ((self.chips + self.bet) - wager_value) < self.limit:
