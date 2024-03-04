@@ -58,7 +58,7 @@ class AIplayer_FoldIfNoPair(Player):
         self.community_number = len(r.community_cards)
     
     def choice(self, opponents, wager_value):
-        if self.hand_strength[0] == 0 and self.community_number > 0:
+        if self.hand_strength[0] == 0 and self.community_number > 0 and self.bet < wager_value:
             self.playFold()
             return wager_value
         
