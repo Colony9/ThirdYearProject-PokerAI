@@ -88,6 +88,13 @@ class AIplayer_CallUpToHalf(Player):
         if ((self.chips + self.bet) - wager_value) < self.limit:
             self.playFold()
             return wager_value
+        elif wager_value > self.chips:
+            self.playCall(wager_value)
+            return wager_value
+        elif ((opponents[0].last_move is None or opponents[0].last_move == "raise" or self.last_move != "raise") 
+            and self.bet < (self.chips / 3)) :
+            self.playRaise(wager_value + 1)
+            return wager_value + 1
         
         self.playCall(wager_value)
         return wager_value
