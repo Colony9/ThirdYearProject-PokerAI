@@ -27,8 +27,8 @@ class AIplayer_Random(Player):
         
         return wager_value
 
-#This AI player always calls/checks, regardless of the situation or its hand's
-#strength.
+#This AI player always calls/checks or raises by 1 chip, regardless of the 
+#situation or its hand's strength.
 class AIplayer_AlwaysCallOrLowRaise(Player):
     def assess(self, r):
         self.hand_strength, _ = evaluateAllHands(self.pocket, r.community_cards)
@@ -37,14 +37,14 @@ class AIplayer_AlwaysCallOrLowRaise(Player):
         if wager_value > self.chips:
             self.playCall(wager_value)
             return wager_value
-        elif opponents[0].last_move is None or opponents[0].last_move == "raise":
+        elif opponents[0].last_move is None or opponents[0].last_move == "raise" or self.last_move != "raise":
             self.playRaise(wager_value + 1)
             return wager_value + 1
         
         self.playCall(wager_value)
         return wager_value
 
-#This AI players will always bet all of its chips at the first opportunity it gets.  
+#This AI players will always bet all of its chips at the flop.  
 class AIplayer_AlwaysAllIn(Player):
     def assess(self, r):
         self.hand_strength, _ = evaluateAllHands(self.pocket, r.community_cards)
@@ -73,7 +73,7 @@ class AIplayer_FoldIfNoPair(Player):
         self.playCall(wager_value)
         return wager_value
 
-#This AI player will always call up to half of the chips it starts the round with.
+#This AI player will always call (or raise by 1) up to half of the chips it starts the round with.
 #It will fold if it is forced to bet more than half of the chips it had at the 
 #start of the round.    
 class AIplayer_CallUpToHalf(Player):   
@@ -85,14 +85,14 @@ class AIplayer_CallUpToHalf(Player):
             self.limit = self.chips / 2
     
     def choice(self, opponents, wager_value):
-        if ((self.chips + self.bet) - wager_value) < self.limit:
+        if (self.chips - wager_value) < self.limit and self.bet < wager_value:
             self.playFold()
             return wager_value
         elif wager_value > self.chips:
             self.playCall(wager_value)
             return wager_value
         elif ((opponents[0].last_move is None or opponents[0].last_move == "raise" or self.last_move != "raise") 
-            and self.bet < (self.chips / 3)) :
+            and wager_value < (self.chips - self.limit)) :
             self.playRaise(wager_value + 1)
             return wager_value + 1
         
