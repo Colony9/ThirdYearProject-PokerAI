@@ -65,7 +65,7 @@ if __name__ == "__main__":
         case 1:
             opponent = BasicAIPlayers.AIplayer_Random("Random", 10000)
         case 2:
-            opponent = BasicAIPlayers.AIplayer_AlwaysCall("Always Call", 10000)
+            opponent = BasicAIPlayers.AIplayer_AlwaysCallOrLowRaise("Conservative", 10000)
         case 3:
             opponent = BasicAIPlayers.AIplayer_AlwaysAllIn("All In", 10000)
         case 4:

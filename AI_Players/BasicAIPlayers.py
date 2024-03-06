@@ -29,11 +29,18 @@ class AIplayer_Random(Player):
 
 #This AI player always calls/checks, regardless of the situation or its hand's
 #strength.
-class AIplayer_AlwaysCall(Player):
+class AIplayer_AlwaysCallOrLowRaise(Player):
     def assess(self, r):
         self.hand_strength, _ = evaluateAllHands(self.pocket, r.community_cards)
     
     def choice(self, opponents, wager_value):
+        if wager_value > self.chips:
+            self.playCall(wager_value)
+            return wager_value
+        elif opponents[0].last_move is None or opponents[0].last_move == "raise":
+            self.playRaise(wager_value + 1)
+            return wager_value + 1
+        
         self.playCall(wager_value)
         return wager_value
 
@@ -41,9 +48,10 @@ class AIplayer_AlwaysCall(Player):
 class AIplayer_AlwaysAllIn(Player):
     def assess(self, r):
         self.hand_strength, _ = evaluateAllHands(self.pocket, r.community_cards)
+        self.community_number = len(r.community_cards)
     
     def choice(self, opponents, wager_value):
-        if wager_value >= self.chips:
+        if wager_value >= self.chips or self.community_number == 0:
             self.playCall(wager_value)
             return wager_value
         
