@@ -14,6 +14,7 @@ class Player():
         self.bet = 0
         self.hand_strength = [0, 0, 0]
         self.folded = False
+        self.no_more_bets = False
         self.last_move = None
     
     #If a player calls, their wager is set to the current betting value or
@@ -28,6 +29,7 @@ class Player():
         if value >= self.chips:
             print(self.name + " goes all in")
             self.bet = self.chips
+            self.no_more_bets = True
         else:
             print(self.name + " calls")
             self.bet = value
@@ -40,6 +42,7 @@ class Player():
         if value >= self.chips:
             print(self.name + " goes all in")
             self.bet = self.chips
+            self.no_more_bets = True
         else:
             print(self.name + " raises to " + str(value))
             self.bet = value
@@ -50,6 +53,7 @@ class Player():
     def playFold(self):
         print(self.name + " folds")
         self.folded = True
+        self.no_more_bets = True
         return
 
 #This class represents a human player and takes user inputs for decisions,
@@ -195,7 +199,6 @@ class Round():
             winner = self.players[0]    
         
         if winner is None:
-            print("Test")
             for i in range(len(self.players[0].hand_strength)):
                 if self.players[0].hand_strength[i] > self.players[1].hand_strength[i]:
                     winner = self.players[0]
@@ -203,38 +206,46 @@ class Round():
                 elif self.players[0].hand_strength[i] < self.players[1].hand_strength[i]:
                     winner = self.players[1]
                     break
-        
+
+        for p in self.players:
+            self.hand_strength = [0, 0, 0]
+            p.folded = False
+            p.no_more_bets = False
+            p.pocket.clear()
         
         if winner is None:
             print("Tie!")
-            self.players[0].chips += self.pot / 2
-            self.players[1].chips += self.pot / 2
-            return
+            self.players[0].chips += self.pot // 2
+            self.players[1].chips += self.pot // 2
+            if (self.pot % 2 != 0):
+                self.players[0].chips += 1
+            return winner
         
         print("The winner is: " + winner.name)
         winner.chips += self.pot
         self.pot = 0
-        return
+
+        return winner
 
     #Between the dealing of cards, players engage in a round of betting,
     #facilitated by this method
     def bettingRound(self):
         #The initial wager of each round is 0, allowing any raise value or check.
-        wager_value = 0
-        #The number of folded players is tracked so that the round ends if only
-        #1 player hasn't folded.
-        num_folded = 0
+        wager_value = self.players[0].bet
+        #The number of players who can't bet (either by folding or going all in) 
+        #is tracked so that the round ends if only 1 player can still bet.
+        num_no_more_bets = 0
         for p in self.players:
-            if p.folded:
-                num_folded += 1
+            if p.no_more_bets:
+                num_no_more_bets += 1
 
         #The betting round endlessly iterates between players until 1 of 2
         #possible conditions is met.
         while True:
             print('\n')
             for p in self.players:
-                #If a player is folded, their turn is skipped.
-                if p.folded:
+                #If a player can no longer bet, their turn is skipped.
+                if p.no_more_bets:
                     continue
                 
                 #The number of players whose last move was 'call' is calculated.
@@ -245,8 +256,8 @@ class Round():
                 
                 #If either all but one players have folded or all players have
                 #called, the round ends.
-                if (num_folded == len(self.players) - 1 or 
-                    num_called == len(self.players)):
+                if ((num_no_more_bets == len(self.players) - 1 and p.bet == wager_value) 
+                    or num_called == len(self.players)):
                     for i in self.players:
                         i.last_move = None
                     return
@@ -257,7 +268,10 @@ class Round():
                 opponents.remove(p)
                 wager_value = p.choice(opponents, wager_value)
                 #If the current player folds, this is tracked.
-                if p.folded:
-                    num_folded += 1
-        
-        
+                if p.no_more_bets:
+                    num_no_more_bets += 1
+
+            if num_no_more_bets == len(self.players):
+                for i in self.players:
+                    i.last_move = None
+                return
