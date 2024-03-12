@@ -16,6 +16,11 @@ hand_types = {
 def renderHand(hand_strength):
     return (hand_types[hand_strength[0]] + " (" + card_values[hand_strength[1]] + ", " + card_values[hand_strength[2]] + ")")
 
+def evaluatePocket(pocket):
+    return str(pocket)
+
+
+
 #This function checks a given 5-card hand to see which poker hand it is.
 #The structure of the hand strength tuple is (ranking of the hand type, highest 
 #value within the hand, second highest value in the hand), with an integer 
@@ -121,10 +126,6 @@ def evaluateAllHands(pocket, community):
                 hands_checked += 1
             
     return strongest_hand, hands_checked
-
-def evaluateSubHand(pocket, community, subHandSize):
-    return 0
-
 
 #This function checks if the hand's values form a consecutive sequence, a hand
 #known as a 'straight'.

@@ -1,5 +1,5 @@
 
-class treeNode():
+class TreeNode():
     def __init__(self, identity, action_route, odds, pot_value, parent=None):
         self.identity = identity
         self.action_route = action_route
@@ -49,5 +49,5 @@ class treeNode():
         elif self.identity == "opponent":
             pass
 
-def completeSubTree(root_node, hand_name, depth_limit):
+def completeSubTree(root_node, depth_limit):
     pass
