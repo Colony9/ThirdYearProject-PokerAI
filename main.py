@@ -60,27 +60,52 @@ if __name__ == "__main__":
     print("-Lazy Pineapple Hold'em-")
     username = input("Enter your name: ")
     user = humanPlayer(username, 10000)
-    opponent_type = int(input("Choose opponent: "))
+    while True:
+        try:
+            opponent_type = int(input("Choose opponent: "))
+            break
+        except:
+            print("Invalid option")
     match opponent_type:
         case 1:
-            opponent = BasicAIPlayers.AIplayer_Random("Random", 10000)
+            opponent = BasicAIPlayers.AIplayer_Random("COM #1", 10000)
         case 2:
-            opponent = BasicAIPlayers.AIplayer_AlwaysCallOrLowRaise("Conservative", 10000)
+            opponent = BasicAIPlayers.AIplayer_AlwaysCallOrLowRaise("COM #2", 10000)
         case 3:
-            opponent = BasicAIPlayers.AIplayer_AlwaysAllIn("All In", 10000)
+            opponent = BasicAIPlayers.AIplayer_AlwaysAllIn("COM #3", 10000)
         case 4:
-            opponent = BasicAIPlayers.AIplayer_FoldIfNoPair("Need a pair", 10000)
+            opponent = BasicAIPlayers.AIplayer_FoldIfNoPair("COM #4", 10000)
         case 5:
-            opponent = BasicAIPlayers.AIplayer_CallUpToHalf("50% Limit", 10000)
+            opponent = BasicAIPlayers.AIplayer_CallUpToHalf("COM #5", 10000)
         case _:
-            opponent = BasicAIPlayers.AIplayer_AlwaysCall("Always Call", 10000)
+            opponent = BasicAIPlayers.AIplayer_AlwaysCallOrLowRaise("Always Call", 10000)
 
+    #rounds = 0
+    #rounds_won = 0
+    #rounds_tied = 0
+    #chips_won = 0
     while True:
         start_chips = user.chips
         winner = playRound([user, opponent])
         print(user.name + " chips: " + str(user.chips))
         print(opponent.name + " chips: " + str(opponent.chips) + '\n')
+        #if winner is not None:
+            #if winner.name == user.name:
+                #rounds_won += 1
+        #else:
+            #rounds_tied += 1
+        #chips_won += user.chips - start_chips
+        #rounds += 1
+        #if rounds == 10000:
+            #print("Rounds won: " + str(rounds_won))
+            #print("Rounds tied: " + str(rounds_tied))
+            #print("Chips won: " + str(chips_won))
+            #break
+        user.chips = 10000
+        opponent.chips = 10000
         replay = input("Would you like to play another round? ")
-        if (replay.lower())[0] != 'y':
+        if len(replay) == 0:
+            break
+        elif (replay.lower())[0] != 'y':
             break
         print("\n------\n\n------\n")
