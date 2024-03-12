@@ -68,6 +68,9 @@ class humanPlayer(Player):
             print("Chips: " + str(self.chips - self.bet))
             print("Current Bet: " + str(self.bet))
             decision = input("What is your move? ").split(None, 2)
+            if len(decision) == 0:
+                print("Must input a move")
+                continue
             move = decision[0].lower()
             #If the user inputs "bet", this is corrected to "raise"
             if move == "bet":
