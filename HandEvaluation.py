@@ -16,10 +16,56 @@ hand_types = {
 def renderHand(hand_strength):
     return (hand_types[hand_strength[0]] + " (" + card_values[hand_strength[1]] + ", " + card_values[hand_strength[2]] + ")")
 
+#This function evaulates the strength of a player's pocket cards by 
+#If a given combination of two cards is within the acceptable set of combinations
+#(see report), it is returned and the respective subtree for the combination is 
+#used to play.
 def evaluatePocket(pocket):
-    return str(pocket)
+    #The pocket is first sorted by value so that a high-value valid combination
+    #isn't skipped over for a weaker, but valid, combination.
+    pocket_combinations = combinations(sorted(pocket, reverse=True), 2)
+    #The function iterates
+    for p in pocket_combinations:
+        #If the combination is a pair of value greater than 3, it is returned
+        #as pocket pairs have the highest priority.
+        if p[0][0] == p[1][0] and p[0][0] >= 4:
+            return str(p)
+        #If the two cards have matching suits
+        elif p[0][1] == p[1][1]:
+            #If the two cards are adjacent in value, they have the potential
+            #to grow into a straight flush.
+            if abs(p[0][0] - p[1][0]) == 1 and p[0][0] > 5:
+                return str(p)
+            #If one card is an ace, the combination is considered strong enough.
+            elif p[0][0] == 14:
+                return str(p)
+            #If one card is a king, and the other card's value is 8 or more,
+            #the combination is considered strong enough.
+            elif p[0][0] == 13 and p[1][0] > 7:
+                return str(p)
+            #If one card is a queen, and the other card's value is 9 or more,
+            #the combination is considered strong enough.
+            elif p[0][0] == 12 and p[1][0] > 8:
+                return str(p)
+            #If one card is a jack, and the other card's value is 9 or more,
+            #the combination is considered strong enough.
+            elif p[0][0] == 11 and p[1][0] > 8:
+                return str(p)
+        #If the two cards have neither matching values or suits
+        else:
+            #If both cards are either face cards or aces, the combination is 
+            #strong enough to be played.
+            if p[0][0] > 10 and p[1][0] > 10:
+                return str(p)
+            #If one card is an ace, and the other a 10, this is acceptable as
+            #it has the potential to grow into a straight or high value pair/full
+            #house.
+            elif p[0][0] == 14 and p[1][0] == 10:
+                return str(p)
 
-
+    #If all three combinations are considered too weak, the hand should only
+    #be checked or folded.
+    return "(0, 0)"
 
 #This function checks a given 5-card hand to see which poker hand it is.
 #The structure of the hand strength tuple is (ranking of the hand type, highest 
