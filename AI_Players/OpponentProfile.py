@@ -30,19 +30,19 @@ class OpponentProfile():
     #odds of raising, dependent on the percentage of their chips they are required
     #to wager to call.
     def getRaiseRate(self):
-        return np.polyfit(self.chip_percentages, self.raise_rates, 2)
+        self.raise_coefficients = np.polyfit(self.chip_percentages, self.raise_rates, 2)
 
     #This function creates a quadratic line of best fit to estimate the opponents
     #odds of folding, dependent on the percentage of their chips they are required
     #to wager to call.
     def getFoldRate(self):
-        return np.polyfit(self.chip_percentages, self.fold_rates, 2)
+        self.fold_coefficients = np.polyfit(self.chip_percentages, self.fold_rates, 2)
 
     #This function creates a quadratic line of best fit to estimate the opponents
     #odds of calling, dependent on the percentage of their chips they are required
     #to wager to call.
     def getCallRate(self):
-        return np.polyfit(self.chip_percentages, self.call_rates, 2)
+        self.call_coefficients = np.polyfit(self.chip_percentages, self.call_rates, 2)
 
     #If the opponent raises, this function recalculates the average value they 
     #raise by as well as updating the rates attributes to reflect the new decision

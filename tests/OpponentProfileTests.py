@@ -20,20 +20,20 @@ class testOpponentProfile(unittest.TestCase):
     #This test checks that the get rates functions correctly obtain a line of 
     #best fit, using the horizontal line that the initial rates fit to.
     def testGetRates_BaseRate(self):
-        result = self.opp.getRaiseRate()
-        self.assertAlmostEqual(result[0], 0)
-        self.assertAlmostEqual(result[1], 0)
-        self.assertAlmostEqual(result[2], 0.33)
+        self.opp.getRaiseRate()
+        self.assertAlmostEqual(self.opp.raise_coefficients[0], 0)
+        self.assertAlmostEqual(self.opp.raise_coefficients[1], 0)
+        self.assertAlmostEqual(self.opp.raise_coefficients[2], 0.33)
         
-        result = self.opp.getFoldRate()
-        self.assertAlmostEqual(result[0], 0)
-        self.assertAlmostEqual(result[1], 0)
-        self.assertAlmostEqual(result[2], 0.33)
+        self.opp.getFoldRate()
+        self.assertAlmostEqual(self.opp.fold_coefficients[0], 0)
+        self.assertAlmostEqual(self.opp.fold_coefficients[1], 0)
+        self.assertAlmostEqual(self.opp.fold_coefficients[2], 0.33)
         
-        result = self.opp.getCallRate()
-        self.assertAlmostEqual(result[0], 0)
-        self.assertAlmostEqual(result[1], 0)
-        self.assertAlmostEqual(result[2], 0.34)
+        self.opp.getCallRate()
+        self.assertAlmostEqual(self.opp.call_coefficients[0], 0)
+        self.assertAlmostEqual(self.opp.call_coefficients[1], 0)
+        self.assertAlmostEqual(self.opp.call_coefficients[2], 0.34)
      
     #This test checks that the 'updateRaise' method correctly calculates the
     #new average raise value and also correctly updates the raise_rates at the
