@@ -1,19 +1,24 @@
 import numpy as np
 
 class OpponentProfile():
-    def __init__(self):
+    def __init__(self, max_chips):
         #The 'raise_rate' attribute measures how likely it is that the opponent 
         #will raise, given that the wager value is a certain portion of their chips
-        self.raise_rates = [0.33, 0.33, 0.33, 0.33, 0.33, 0.33, 0.33, 0.33, 0.33, 0.33, 0.33]
+        self.allIn_rates = [0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25]
+        self.allIn_coefficients = [0, 0, 0]
+        
+        #The 'raise_rate' attribute measures how likely it is that the opponent 
+        #will raise, given that the wager value is a certain portion of their chips
+        self.raise_rates = [0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25]
         self.raise_coefficients = [0, 0, 0]
         #The 'fold_rate' attribute measures how likely it is that the opponent
         #will fold, given that the wager value is a certain portion of their chips
-        self.fold_rates = [0.33, 0.33, 0.33, 0.33, 0.33, 0.33, 0.33, 0.33, 0.33, 0.33, 0.33]
+        self.fold_rates = [0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25]
         self.fold_coefficients = [0, 0, 0]
 
         #The 'call_rate' attribute measures how likely it is that the opponent
         #will call/check, given that the wager value is a certain portion of their chips
-        self.call_rates = [0.34, 0.34, 0.34, 0.34, 0.34, 0.34, 0.34, 0.34, 0.34, 0.34, 0.34]
+        self.call_rates = [0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25]
         self.call_coefficients = [0, 0, 0]
 
         #The 'chip_percentage' value stores a list of percentages of the opponent's
@@ -25,6 +30,14 @@ class OpponentProfile():
 
         self.average_raise_value = 100
         self.raise_instances = 0
+
+        self.max_chips = max_chips
+
+    #This function creates a quadratic line of best fit to estimate the opponents
+    #odds of raising, dependent on the percentage of their chips they are required
+    #to wager to call.
+    def getAllInRate(self):
+        self.allIn_coefficients = np.polyfit(self.chip_percentages, self.allIn_rates, 2)
 
     #This function creates a quadratic line of best fit to estimate the opponents
     #odds of raising, dependent on the percentage of their chips they are required
@@ -44,6 +57,22 @@ class OpponentProfile():
     def getCallRate(self):
         self.call_coefficients = np.polyfit(self.chip_percentages, self.call_rates, 2)
 
+    #If the opponent calls, this function updates the rates attributes to reflect
+    #the new decision made.
+    def updateAllIn(self, wager, chips):
+        #If the wager value exceeds the amount of chips they have, it is no
+        #different from having to bet all of their chips.
+        if wager > chips:
+            action_threshold = 10
+        else:
+            action_threshold = int(round(wager / chips, 1) / 0.1)
+
+        self.allIn_rates[action_threshold] = ((self.allIn_rates[action_threshold] * self.action_count[action_threshold]) + 1) / (self.action_count[action_threshold] + 1)
+        self.raise_rates[action_threshold] = (self.raise_rates[action_threshold] * self.action_count[action_threshold]) / (self.action_count[action_threshold] + 1)
+        self.fold_rates[action_threshold] = (self.fold_rates[action_threshold] * self.action_count[action_threshold]) / (self.action_count[action_threshold] + 1)
+        self.call_rates[action_threshold] = (self.call_rates[action_threshold] * self.action_count[action_threshold]) / (self.action_count[action_threshold] + 1)
+        self.action_count[action_threshold] += 1
+
     #If the opponent raises, this function recalculates the average value they 
     #raise by as well as updating the rates attributes to reflect the new decision
     #made.
@@ -57,7 +86,8 @@ class OpponentProfile():
             action_threshold = 10
         else:
             action_threshold = int(round(wager / chips, 1) / 0.1)
-
+        
+        self.allIn_rates[action_threshold] = (self.allIn_rates[action_threshold] * self.action_count[action_threshold]) / (self.action_count[action_threshold] + 1)
         self.raise_rates[action_threshold] = ((self.raise_rates[action_threshold] * self.action_count[action_threshold]) + 1) / (self.action_count[action_threshold] + 1)
         self.fold_rates[action_threshold] = (self.fold_rates[action_threshold] * self.action_count[action_threshold]) / (self.action_count[action_threshold] + 1)
         self.call_rates[action_threshold] = (self.call_rates[action_threshold] * self.action_count[action_threshold]) / (self.action_count[action_threshold] + 1)
@@ -73,6 +103,7 @@ class OpponentProfile():
         else:
             action_threshold = int(round(wager / chips, 1) / 0.1)
 
+        self.allIn_rates[action_threshold] = (self.allIn_rates[action_threshold] * self.action_count[action_threshold]) / (self.action_count[action_threshold] + 1)
         self.raise_rates[action_threshold] = (self.raise_rates[action_threshold] * self.action_count[action_threshold]) / (self.action_count[action_threshold] + 1)
         self.fold_rates[action_threshold] = ((self.fold_rates[action_threshold] * self.action_count[action_threshold]) + 1) / (self.action_count[action_threshold] + 1)
         self.call_rates[action_threshold] = (self.call_rates[action_threshold] * self.action_count[action_threshold]) / (self.action_count[action_threshold] + 1)
@@ -88,6 +119,7 @@ class OpponentProfile():
         else:
             action_threshold = int(round(wager / chips, 1) / 0.1)
 
+        self.allIn_rates[action_threshold] = (self.allIn_rates[action_threshold] * self.action_count[action_threshold]) / (self.action_count[action_threshold] + 1)
         self.raise_rates[action_threshold] = (self.raise_rates[action_threshold] * self.action_count[action_threshold]) / (self.action_count[action_threshold] + 1)
         self.fold_rates[action_threshold] = (self.fold_rates[action_threshold] * self.action_count[action_threshold]) / (self.action_count[action_threshold] + 1)
         self.call_rates[action_threshold] = ((self.call_rates[action_threshold] * self.action_count[action_threshold]) + 1) / (self.action_count[action_threshold] + 1)

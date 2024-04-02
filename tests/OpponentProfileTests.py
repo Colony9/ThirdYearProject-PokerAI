@@ -5,35 +5,41 @@ from AI_Players import OpponentProfile
 
 class testOpponentProfile(unittest.TestCase):
     def setUp(self):
-        self.opp = OpponentProfile.OpponentProfile()
+        self.opp = OpponentProfile.OpponentProfile(1000)
     
     #This test checks that the profile object is correctly constructed with
     #the correct attributes.
     def testConstruction(self):
         for i in range(11):
-            self.assertEqual(self.opp.raise_rates[i], 0.33)
-            self.assertEqual(self.opp.fold_rates[i], 0.33)
-            self.assertEqual(self.opp.call_rates[i], 0.34)
+            self.assertEqual(self.opp.allIn_rates[i], 0.25)
+            self.assertEqual(self.opp.raise_rates[i], 0.25)
+            self.assertEqual(self.opp.fold_rates[i], 0.25)
+            self.assertEqual(self.opp.call_rates[i], 0.25)
             self.assertAlmostEqual(self.opp.chip_percentages[i], 0.1 * i)
             self.assertEqual(self.opp.action_count[i], 0)
     
     #This test checks that the get rates functions correctly obtain a line of 
     #best fit, using the horizontal line that the initial rates fit to.
     def testGetRates_BaseRate(self):
+        self.opp.getAllInRate()
+        self.assertAlmostEqual(self.opp.allIn_coefficients[0], 0)
+        self.assertAlmostEqual(self.opp.allIn_coefficients[1], 0)
+        self.assertAlmostEqual(self.opp.allIn_coefficients[2], 0.25)
+        
         self.opp.getRaiseRate()
         self.assertAlmostEqual(self.opp.raise_coefficients[0], 0)
         self.assertAlmostEqual(self.opp.raise_coefficients[1], 0)
-        self.assertAlmostEqual(self.opp.raise_coefficients[2], 0.33)
+        self.assertAlmostEqual(self.opp.raise_coefficients[2], 0.25)
         
         self.opp.getFoldRate()
         self.assertAlmostEqual(self.opp.fold_coefficients[0], 0)
         self.assertAlmostEqual(self.opp.fold_coefficients[1], 0)
-        self.assertAlmostEqual(self.opp.fold_coefficients[2], 0.33)
+        self.assertAlmostEqual(self.opp.fold_coefficients[2], 0.25)
         
         self.opp.getCallRate()
         self.assertAlmostEqual(self.opp.call_coefficients[0], 0)
         self.assertAlmostEqual(self.opp.call_coefficients[1], 0)
-        self.assertAlmostEqual(self.opp.call_coefficients[2], 0.34)
+        self.assertAlmostEqual(self.opp.call_coefficients[2], 0.25)
      
     #This test checks that the 'updateRaise' method correctly calculates the
     #new average raise value and also correctly updates the raise_rates at the
@@ -57,8 +63,8 @@ class testOpponentProfile(unittest.TestCase):
         
         self.assertEqual(self.opp.fold_rates[0], 0.5)
         self.assertEqual(self.opp.call_rates[0], 0.5)
-        self.assertEqual(self.opp.fold_rates[1], 0.33)
-        self.assertEqual(self.opp.call_rates[1], 0.34) 
+        self.assertEqual(self.opp.fold_rates[1], 0.25)
+        self.assertEqual(self.opp.call_rates[1], 0.25) 
         
         self.opp.updateCall(0, 10000)
         self.opp.updateCall(0, 10000)
