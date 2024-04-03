@@ -1,4 +1,3 @@
-import sys
 from OpponentProfile import OpponentProfile
 
 class TreeNode():
@@ -17,11 +16,16 @@ class TreeNode():
         self.bet_val = bet_value
         self.opp_bet = opp_bet_value
 
-    def expandChildren(self, maxChips, opp):
+    def expandChildren(self, maxChips, opp, big_blind):
         if self.identity == "terminal" or self.identity == "base":
             return
         elif self.identity == "player":
-            if self.action_route == "raise" or self.parent.action_route == None:
+            if self.action_route == "all in":
+                self.children.append(TreeNode("terminal", "call", 0.5, 
+                                              self.pot_val, opp.max_chips, self.opp_bet, parent=self))
+                self.children.append(TreeNode("terminal", "fold", 0.5, 
+                                              self.pot_val, self.bet_val, self.opp_bet, parent=self))
+            elif self.action_route == "raise" or self.parent.action_route == None:
                 self.children.append(TreeNode("opponent", "all in", 0.2, 
                                               self.pot_val, maxChips, self.opp_bet, parent=self))
                 self.children.append(TreeNode("opponent", "raise", 0.2, 
@@ -32,11 +36,7 @@ class TreeNode():
                                               self.pot_val, min(maxChips, self.bet_val + opp.average_raise_value), self.opp_bet, parent=self))
                 self.children.append(TreeNode("terminal", "fold", 0.2, 
                                               self.pot_val, self.bet_val, self.opp_bet, parent=self))
-            elif self.action_route == "all in":
-                self.children.append(TreeNode("terminal", "call", 0.5, 
-                                              self.pot_val, opp.max_chips, self.opp_bet, parent=self))
-                self.children.append(TreeNode("terminal", "fold", 0.5, 
-                                              self.pot_val, self.bet_val, self.opp_bet, parent=self))
+
             elif self.action_route == "call":
                 #The AI isn't permitted to re-raise and there is no benefit to 
                 #folding over checking.
@@ -47,7 +47,7 @@ class TreeNode():
                 wager = opp.max_chips
             else:
                 wager = self.bet_val
-            
+
             allIn_rate = (opp.allIn_coefficients[0] * (wager ** 2)) + (opp.allIn_coefficients[1] * wager) + opp.allIn_coefficients[2]
             raise_rate = (opp.raise_coefficients[0] * (wager ** 2)) + (opp.raise_coefficients[1] * wager) + opp.raise_coefficients[2]
             call_rate = (opp.call_coefficients[0] * (wager** 2)) + (opp.call_coefficients[1] * wager) + opp.call_coefficients[2]
@@ -86,7 +86,35 @@ class TreeNode():
                 self.children.append(TreeNode("terminal", "call", 1.0, 
                                               self.pot_val, self.bet_val, self.opp_bet, parent=self))
         else:
-            pass
+            if big_blind:
+                self.children.append(TreeNode("opponent", "all in", 0.2, 
+                                              self.pot_val, maxChips, self.opp_bet, parent=self))
+                self.children.append(TreeNode("opponent", "raise", 0.2, 
+                                              self.pot_val, min(maxChips, self.bet_val + self.pot_val), self.opp_bet, parent=self))
+                self.children.append(TreeNode("opponent", "raise", 0.2, 
+                                              self.pot_val, min(maxChips, self.bet_val + round(self.pot_val * 0.25)), self.opp_bet, parent=self))
+                self.children.append(TreeNode("opponent", "call", 0.2, 
+                                              self.pot_val, min(maxChips, self.bet_val + opp.average_raise_value), self.opp_bet, parent=self))
+                self.children.append(TreeNode("terminal", "fold", 0.2, 
+                                              self.pot_val, self.bet_val, self.opp_bet, parent=self))
+            else:
+                allIn_rate = opp.allIn_coefficients[2]
+                raise_rate = opp.raise_coefficients[2]
+                call_rate = opp.call_coefficients[2]
+                fold_rate = opp.fold_coefficients[2]
+
+                total_rate = allIn_rate + raise_rate + call_rate + fold_rate
+
+                self.children.append(TreeNode("player", "all in", allIn_rate / total_rate, 
+                                              self.pot_val + (opp.max_chips - self.opp_bet), self.bet_val, opp.max_chips, parent=self))
+                self.children.append(TreeNode("player", "raise", raise_rate / total_rate, 
+                                              min(self.pot_val + (opp.max_chips - self.opp_bet), self.pot_val + opp.average_raise_value),
+                                              self.bet_val, min(opp.max_chips, self.opp_bet + opp.average_raise_value), parent=self))
+                self.children.append(TreeNode("player", "call", call_rate / total_rate, 
+                                              max(min(self.pot_val + (self.bet_val - self.opp_bet), self.pot_val + (opp.max_chips - self.opp_bet)), self.pot_val),
+                                              self.bet_val, max(min(opp.max_chips, self.bet_val), self.opp_bet), parent=self))
+                self.children.append(TreeNode("terminal", "fold", fold_rate / total_rate,
+                                              self.pot_val, self.bet_val, self.opp_bet, parent=self))
 
     def backPropagate(self):
         if self.identity == "player":
@@ -96,7 +124,7 @@ class TreeNode():
             for child in self.children:
                 self.value += child.odds * child.value
         return
-            
+
 
     def calculateRegret(self):
         if self.identity != "player":
@@ -127,26 +155,46 @@ class TreeNode():
             pass
 
 
-def completeSubTree(root_node, depth_limit, maxChips, opp, node_count):
+def completeSubTree(root_node, depth_limit, maxChips, opp, big_blind, node_count):
     if depth_limit == 0:
+        if root_node.identity == "player":
+            if root_node.action_route == "all in":
+                root_node.children.append(TreeNode("terminal", "call", 0.5, 
+                                                   root_node.pot_val, min(maxChips, root_node.bet_val + opp.average_raise_value), 
+                                                   root_node.opp_bet, parent=root_node))
+                root_node.children.append(TreeNode("terminal", "fold", 0.5, 
+                                                   root_node.pot_val, root_node.bet_val, root_node.opp_bet, parent=root_node))
+            elif root_node.action_route == "raise":
+                root_node.children.append(TreeNode("terminal", "call", 0.5, 
+                                                   root_node.pot_val, min(maxChips, root_node.bet_val + opp.average_raise_value), 
+                                                   root_node.opp_bet, parent=root_node))
+                root_node.children.append(TreeNode("terminal", "fold", 0.5, 
+                                                   root_node.pot_val, root_node.bet_val, root_node.opp_bet, parent=root_node))
+            else:
+                root_node.children.append(TreeNode("terminal", "call", 1.0, 
+                                              root_node.pot_val, root_node.bet_val, root_node.opp_bet, parent=root_node))
+                
+
+            node_count += 2
         return node_count
-    root_node.expandChildren(maxChips, opp)
+
+    root_node.expandChildren(maxChips, opp, big_blind)
     for child in root_node.children:
         node_count += 1
         print(depth_limit)
-        print(child.identity + " " + child.action_route + " " + str(child.pot_val) + " " + str(child.bet_val))
-        node_count = completeSubTree(child, depth_limit - 1, maxChips, opp, node_count)
+        print(child.identity + " " + child.action_route + " " + str(child.odds)+ " " + str(child.pot_val) + " " + str(child.bet_val))
+        node_count = completeSubTree(child, depth_limit - 1, maxChips, opp, big_blind, node_count)
     return node_count
 
 def updateSubTreeOdds(root_node, opp):
     pass
 
 if __name__ == "__main__":
-    base_node = TreeNode("opponent", "raise", 1.0, 50, 25, 50)
+    base_node = TreeNode("(1 1 1)", None, 1.0, 50, 25, 50)
     opp = OpponentProfile(100)
     opp.getAllInRate()
     opp.getCallRate()
     opp.getFoldRate()
     opp.getRaiseRate()
-    node_count = completeSubTree(base_node, 5, 100, opp, 1)
+    node_count = completeSubTree(base_node, 7, 100, opp, False, 1)
     print(node_count)
