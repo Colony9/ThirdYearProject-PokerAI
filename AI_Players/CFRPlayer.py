@@ -22,13 +22,13 @@ class AIPlayer_CFR(Player):
             else:
                 for hand in self.base_node.children:
                     if pocket_strength == hand.identity:
-                        updateSubTreeOdds(hand, self.opponent_profile)
+                        updateSubTreeOdds(hand, 0, self.opponent_profile, False)
                         self.round_base_node = hand
                         return
                     
                 new_pocket_node = TreeNode(pocket_strength, None, 1.0, 0, 0, 0, parent=self.base_node)
                 self.base_node.children.append(new_pocket_node)
-                self.round_base_node = completeSubTree(new_pocket_node, 7, self.chips, self.opponent_profile, 1)
+                self.round_base_node = completeSubTree(new_pocket_node, 7, self.chips, self.opponent_profile, False, 1)
                 return
             
         self.hand_strength, _ = evaluateAllHands(self.pocket, r.community_cards)
@@ -44,13 +44,13 @@ class AIPlayer_CFR(Player):
         
         for hand in self.base_node.children:
             if hand_name == hand.identity:
-                updateSubTreeOdds(hand, self.opponent_profile)
+                updateSubTreeOdds(hand, 0, self.opponent_profile, False)
                 self.round_base_node = hand
                 return
         
         new_hand_node = TreeNode(hand_name, None, 1.0, 0, 0, 0)
         self.base_node.children.append(new_hand_node)
-        self.round_base_node = completeSubTree(new_hand_node, 7, self.chips, self.opponent_profile, 1)
+        self.round_base_node = completeSubTree(new_hand_node, 7, self.chips, self.opponent_profile, False, 1)
         return
     
     def choice(self, opponents, wager_value):
