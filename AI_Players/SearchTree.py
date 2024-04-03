@@ -63,8 +63,8 @@ class TreeNode():
                                               min(self.pot_val + (opp.max_chips - self.opp_bet), self.pot_val + opp.average_raise_value),
                                               self.bet_val, min(opp.max_chips, self.opp_bet + opp.average_raise_value), parent=self))
                 self.children.append(TreeNode("player", "call", call_rate / total_rate, 
-                                              min(self.pot_val + (self.bet_val - self.opp_bet), self.pot_val + (opp.max_chips - self.opp_bet)),
-                                              self.bet_val, min(opp.max_chips, self.bet_val), parent=self))
+                                              max(min(self.pot_val + (self.bet_val - self.opp_bet), self.pot_val + (opp.max_chips - self.opp_bet)), self.pot_val),
+                                              self.bet_val, max(min(opp.max_chips, self.bet_val), self.opp_bet), parent=self))
                 self.children.append(TreeNode("terminal", "fold", fold_rate / total_rate,
                                               self.pot_val, self.bet_val, self.opp_bet, parent=self))
             elif self.action_route == "all in":
@@ -130,13 +130,11 @@ class TreeNode():
 def completeSubTree(root_node, depth_limit, maxChips, opp, node_count):
     if depth_limit == 0:
         return node_count
-    if root_node.identity == "terminal":
-        return node_count
     root_node.expandChildren(maxChips, opp)
     for child in root_node.children:
         node_count += 1
         print(depth_limit)
-        print(child.identity + " " + child.action_route)
+        print(child.identity + " " + child.action_route + " " + str(child.pot_val) + " " + str(child.bet_val))
         node_count = completeSubTree(child, depth_limit - 1, maxChips, opp, node_count)
     return node_count
 
@@ -144,11 +142,11 @@ def updateSubTreeOdds(root_node, opp):
     pass
 
 if __name__ == "__main__":
-    base_node = TreeNode("player", "raise", 0.5, 5000, 2000, 2000)
-    opp = OpponentProfile(10000)
+    base_node = TreeNode("opponent", "raise", 1.0, 50, 25, 50)
+    opp = OpponentProfile(100)
     opp.getAllInRate()
     opp.getCallRate()
     opp.getFoldRate()
     opp.getRaiseRate()
-    node_count = completeSubTree(base_node, 3, 10000, opp, 1)
+    node_count = completeSubTree(base_node, 5, 100, opp, 1)
     print(node_count)
