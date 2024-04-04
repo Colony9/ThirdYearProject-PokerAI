@@ -44,9 +44,9 @@ class TreeNode():
                                               self.pot_val, self.bet_val, self.opp_bet, parent=self))
         elif self.identity == "opponent":
             if self.bet_val > opp.max_chips:
-                wager = opp.max_chips
+                wager = 1.0
             else:
-                wager = self.bet_val
+                wager = self.bet_val / opp.max_chips
 
             allIn_rate = (opp.allIn_coefficients[0] * (wager ** 2)) + (opp.allIn_coefficients[1] * wager) + opp.allIn_coefficients[2]
             raise_rate = (opp.raise_coefficients[0] * (wager ** 2)) + (opp.raise_coefficients[1] * wager) + opp.raise_coefficients[2]
@@ -139,8 +139,8 @@ class TreeNode():
             self.regret_values[c] += max(0, self.children[c].value - self.value)
         return
 
-    def readjustOdds(self, opp):
-        if self.identity == "player":
+    def readjustOdds(self, opp, big_blind):
+        if self.identity == "player" or (self.identity != "terminal" and big_blind):
             normalisation_factor = 0
             for regret in self.regret_values:
                 normalisation_factor += regret
@@ -152,7 +152,53 @@ class TreeNode():
                 self.children[c].odds = self.regret_values[c] / normalisation_factor
 
         elif self.identity == "opponent":
-            pass
+           if self.bet_val > opp.max_chips:
+               wager = 1.0
+           else:
+               wager = self.bet_val / opp.max_chips
+
+           allIn_rate = (opp.allIn_coefficients[0] * (wager ** 2)) + (opp.allIn_coefficients[1] * wager) + opp.allIn_coefficients[2]
+           raise_rate = (opp.raise_coefficients[0] * (wager ** 2)) + (opp.raise_coefficients[1] * wager) + opp.raise_coefficients[2]
+           call_rate = (opp.call_coefficients[0] * (wager** 2)) + (opp.call_coefficients[1] * wager) + opp.call_coefficients[2]
+           fold_rate = (opp.fold_coefficients[0] * (wager ** 2)) + (opp.fold_coefficients[1] * wager) + opp.fold_coefficients[2]
+           
+           if self.action_route == "all in":
+               total_rate = call_rate + fold_rate
+               if total_rate == 0:
+                   call_odds = 0.5
+                   fold_odds = 0.5
+               else:
+                   call_odds = call_rate / total_rate
+                   fold_odds = fold_rate / total_rate
+
+               self.children[0].odds = call_odds
+               self.children[1].odds = fold_odds            
+           elif self.action_route == "raise" or self.parent.action_route == None:
+               total_rate = allIn_rate + raise_rate + call_rate + fold_rate
+               
+               self.children[0].odds = allIn_rate / total_rate
+               self.children[1].odds = raise_rate / total_rate
+               self.children[2].odds = call_rate / total_rate
+               self.children[3].odds = fold_rate / total_rate
+
+        elif self.identity != "terminal":
+            if self.bet_val > opp.max_chips:
+                wager = 1.0
+            else:
+                wager = self.bet_val / opp.max_chips
+
+            allIn_rate = (opp.allIn_coefficients[0] * (wager ** 2)) + (opp.allIn_coefficients[1] * wager) + opp.allIn_coefficients[2]
+            raise_rate = (opp.raise_coefficients[0] * (wager ** 2)) + (opp.raise_coefficients[1] * wager) + opp.raise_coefficients[2]
+            call_rate = (opp.call_coefficients[0] * (wager** 2)) + (opp.call_coefficients[1] * wager) + opp.call_coefficients[2]
+            fold_rate = (opp.fold_coefficients[0] * (wager ** 2)) + (opp.fold_coefficients[1] * wager) + opp.fold_coefficients[2]
+            
+            total_rate = allIn_rate + raise_rate + call_rate + fold_rate
+            
+            self.children[0].odds = allIn_rate / total_rate
+            self.children[1].odds = raise_rate / total_rate
+            self.children[2].odds = call_rate / total_rate
+            self.children[3].odds = fold_rate / total_rate
+            
 
 
 def completeSubTree(root_node, depth_limit, maxChips, opp, big_blind, node_count):
@@ -250,7 +296,7 @@ def updateSubTreeOdds(root_node, maxChips, opp, big_blind):
             root_node.children[3].pot_val = root_node.pot_val
             root_node.children[3].opp_bet = root_node.opp_bet
 
-    root_node.readjustOdds(opp)
+    root_node.readjustOdds(opp, big_blind)
     print(root_node.identity + " " + str(root_node.action_route) + " " + str(root_node.odds)+ " " + str(root_node.pot_val) + " " + str(root_node.bet_val))
     for child in root_node.children:
         updateSubTreeOdds(child, maxChips, opp, big_blind)
@@ -261,5 +307,16 @@ if __name__ == "__main__":
     opp = OpponentProfile(100)
     node_count = completeSubTree(base_node, 3, 100, opp, False, 1)
     base_node.pot_val = 60
+    base_node.children[0].regret_values[0] = 800000000000
+    base_node.children[0].regret_values[1] = 400000000000
+    for i in range(len(opp.allIn_rates)):
+        opp.allIn_rates[i] = 1.0
+        opp.raise_rates[i] = 0.0
+        opp.call_rates[i] = 0.0
+        opp.fold_rates[i] = 0.0
+    opp.getAllInRate()
+    opp.getRaiseRate()
+    opp.getCallRate()
+    opp.getFoldRate()
     updateSubTreeOdds(base_node, 100, opp, False)
     print(node_count)
