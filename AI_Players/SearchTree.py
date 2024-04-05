@@ -29,9 +29,9 @@ class TreeNode():
                 self.children.append(TreeNode("opponent", "all in", 0.2, 
                                               self.pot_val, maxChips, self.opp_bet, parent=self))
                 self.children.append(TreeNode("opponent", "raise", 0.2, 
-                                              self.pot_val, min(maxChips, self.bet_val + self.pot_val), self.opp_bet, parent=self))
+                                              self.pot_val, min(maxChips, max(self.bet_val, self.opp_bet) + self.pot_val), self.opp_bet, parent=self))
                 self.children.append(TreeNode("opponent", "raise", 0.2, 
-                                              self.pot_val, min(maxChips, self.bet_val + round(self.pot_val * 0.25)), self.opp_bet, parent=self))
+                                              self.pot_val, min(maxChips, max(self.bet_val, self.opp_bet) + round(self.pot_val * 0.25)), self.opp_bet, parent=self))
                 self.children.append(TreeNode("opponent", "call", 0.2, 
                                               self.pot_val, max(min(maxChips, self.opp_bet), self.bet_val), self.opp_bet, parent=self))
                 self.children.append(TreeNode("terminal", "fold", 0.2, 
@@ -73,15 +73,13 @@ class TreeNode():
                 self.children.append(TreeNode("player", "all in", allIn_rate / total_rate, 
                                               self.pot_val + (opp.max_chips - self.opp_bet), self.bet_val, opp.max_chips, parent=self))
                 self.children.append(TreeNode("player", "raise", raise_rate / total_rate, 
-                                              min(self.pot_val + (opp.max_chips - self.opp_bet), self.pot_val + opp.average_raise_value),
-                                              self.bet_val, min(opp.max_chips, self.opp_bet + opp.average_raise_value), parent=self))
+                                              min(self.pot_val + (opp.max_chips - self.opp_bet), self.pot_val + max((self.bet_val - self.opp_bet), 0) + opp.average_raise_value),
+                                              self.bet_val, min(opp.max_chips, max(self.bet_val, self.opp_bet) + opp.average_raise_value), parent=self))
                 self.children.append(TreeNode("player", "call", call_rate / total_rate, 
-                                              max(min(self.pot_val + (self.bet_val - self.opp_bet), self.pot_val + (opp.max_chips - self.opp_bet)), self.pot_val),
+                                              max(self.pot_val + (min(self.bet_val, opp.max_chips) - self.opp_bet), self.pot_val),
                                               self.bet_val, max(min(opp.max_chips, self.bet_val), self.opp_bet), parent=self))
                 self.children.append(TreeNode("terminal", "fold", fold_rate / total_rate,
                                               self.pot_val, self.bet_val, self.opp_bet, parent=self))
-
-                
             elif self.action_route == "call":
                 self.children.append(TreeNode("terminal", "call", 1.0, 
                                               self.pot_val, self.bet_val, self.opp_bet, parent=self))
@@ -90,11 +88,11 @@ class TreeNode():
                 self.children.append(TreeNode("opponent", "all in", 0.2, 
                                               self.pot_val, maxChips, self.opp_bet, parent=self))
                 self.children.append(TreeNode("opponent", "raise", 0.2, 
-                                              self.pot_val, min(maxChips, self.bet_val + self.pot_val), self.opp_bet, parent=self))
+                                              self.pot_val, min(maxChips, max(self.bet_val, self.opp_bet) + self.pot_val), self.opp_bet, parent=self))
                 self.children.append(TreeNode("opponent", "raise", 0.2, 
-                                              self.pot_val, min(maxChips, self.bet_val + round(self.pot_val * 0.25)), self.opp_bet, parent=self))
+                                              self.pot_val, min(maxChips, max(self.bet_val, self.opp_bet) + round(self.pot_val * 0.25)), self.opp_bet, parent=self))
                 self.children.append(TreeNode("opponent", "call", 0.2, 
-                                              self.pot_val, min(maxChips, self.bet_val + opp.average_raise_value), self.opp_bet, parent=self))
+                                              self.pot_val, max(min(maxChips, self.opp_bet), self.bet_val), self.opp_bet, parent=self))
                 self.children.append(TreeNode("terminal", "fold", 0.2, 
                                               self.pot_val, self.bet_val, self.opp_bet, parent=self))
             else:
@@ -108,10 +106,10 @@ class TreeNode():
                 self.children.append(TreeNode("player", "all in", allIn_rate / total_rate, 
                                               self.pot_val + (opp.max_chips - self.opp_bet), self.bet_val, opp.max_chips, parent=self))
                 self.children.append(TreeNode("player", "raise", raise_rate / total_rate, 
-                                              min(self.pot_val + (opp.max_chips - self.opp_bet), self.pot_val + opp.average_raise_value),
-                                              self.bet_val, min(opp.max_chips, self.opp_bet + opp.average_raise_value), parent=self))
+                                              min(self.pot_val + (opp.max_chips - self.opp_bet), self.pot_val + max((self.bet_val - self.opp_bet), 0) + opp.average_raise_value),
+                                              self.bet_val, min(opp.max_chips, max(self.bet_val, self.opp_bet) + opp.average_raise_value), parent=self))
                 self.children.append(TreeNode("player", "call", call_rate / total_rate, 
-                                              max(min(self.pot_val + (self.bet_val - self.opp_bet), self.pot_val + (opp.max_chips - self.opp_bet)), self.pot_val),
+                                              max(self.pot_val + (min(self.bet_val, opp.max_chips) - self.opp_bet), self.pot_val),
                                               self.bet_val, max(min(opp.max_chips, self.bet_val), self.opp_bet), parent=self))
                 self.children.append(TreeNode("terminal", "fold", fold_rate / total_rate,
                                               self.pot_val, self.bet_val, self.opp_bet, parent=self))
@@ -227,8 +225,6 @@ def completeSubTree(root_node, depth_limit, maxChips, opp, big_blind, node_count
     root_node.expandChildren(maxChips, opp, big_blind)
     for child in root_node.children:
         node_count += 1
-        print(depth_limit)
-        print(child.identity + " " + child.action_route + " " + str(child.odds)+ " " + str(child.pot_val) + " " + str(child.bet_val))
         node_count = completeSubTree(child, depth_limit - 1, maxChips, opp, big_blind, node_count)
     return node_count
 
@@ -247,8 +243,8 @@ def updateSubTreeOdds(root_node, maxChips, opp, big_blind):
                 root_node.children[1].bet_val = root_node.bet_val
             else:
                 root_node.children[0].bet_val = maxChips
-                root_node.children[1].bet_val = min(maxChips, root_node.bet_val + root_node.pot_val)
-                root_node.children[2].bet_val = min(maxChips, root_node.bet_val + round(root_node.pot_val * 0.25))
+                root_node.children[1].bet_val = min(maxChips, max(root_node.bet_val, root_node.opp_bet) + root_node.pot_val)
+                root_node.children[2].bet_val = min(maxChips, max(root_node.bet_val, root_node.opp_bet) + round(root_node.pot_val * 0.25))
                 root_node.children[3].bet_val = max(min(maxChips, root_node.opp_bet), root_node.bet_val)
                 root_node.children[4].bet_val = root_node.bet_val
         elif root_node.action_route == "call":
@@ -265,9 +261,9 @@ def updateSubTreeOdds(root_node, maxChips, opp, big_blind):
         elif root_node.action_route == "raise" or root_node.parent.action_route == None:
             root_node.children[0].pot_val = root_node.pot_val + (opp.max_chips - root_node.opp_bet)
             root_node.children[0].opp_bet = opp.max_chips
-            root_node.children[1].pot_val = min(root_node.pot_val + (opp.max_chips - root_node.opp_bet), root_node.pot_val + opp.average_raise_value)
-            root_node.children[1].opp_bet = min(opp.max_chips, root_node.opp_bet + opp.average_raise_value)
-            root_node.children[2].pot_val = max(min(root_node.pot_val + (root_node.bet_val - root_node.opp_bet), root_node.pot_val + (opp.max_chips - root_node.opp_bet)), root_node.pot_val)
+            root_node.children[1].pot_val = min(root_node.pot_val + (opp.max_chips - root_node.opp_bet), root_node.pot_val + max((root_node.bet_val - root_node.opp_bet), 0) + opp.average_raise_value)
+            root_node.children[1].opp_bet = min(opp.max_chips, max(root_node.bet_val, root_node.opp_bet) + opp.average_raise_value)
+            root_node.children[2].pot_val = max(root_node.pot_val + (min(root_node.bet_val, opp.max_chips) - root_node.opp_bet), root_node.pot_val)
             root_node.children[2].opp_bet = max(min(opp.max_chips, root_node.bet_val), root_node.opp_bet)
             root_node.children[3].pot_val = root_node.pot_val
             root_node.children[3].opp_bet = root_node.opp_bet
@@ -280,8 +276,8 @@ def updateSubTreeOdds(root_node, maxChips, opp, big_blind):
                 child.pot_val = root_node.pot_val
                 child.opp_bet = root_node.opp_bet
             root_node.children[0].bet_val = maxChips
-            root_node.children[1].bet_val = min(maxChips, root_node.bet_val + root_node.pot_val)
-            root_node.children[2].bet_val = min(maxChips, root_node.bet_val + round(root_node.pot_val * 0.25))
+            root_node.children[1].bet_val = min(maxChips, max(root_node.bet_val, root_node.opp_bet) + root_node.pot_val)
+            root_node.children[2].bet_val = min(maxChips, max(root_node.bet_val, root_node.opp_bet) + round(root_node.pot_val * 0.25))
             root_node.children[3].bet_val = max(min(maxChips, root_node.opp_bet), root_node.bet_val)
             root_node.children[4].bet_val = root_node.bet_val           
         else:
@@ -289,15 +285,14 @@ def updateSubTreeOdds(root_node, maxChips, opp, big_blind):
                 child.bet_val = root_node.bet_val
             root_node.children[0].pot_val = root_node.pot_val + (opp.max_chips - root_node.opp_bet)
             root_node.children[0].opp_bet = opp.max_chips
-            root_node.children[1].pot_val = min(root_node.pot_val + (opp.max_chips - root_node.opp_bet), root_node.pot_val + opp.average_raise_value)
-            root_node.children[1].opp_bet = min(opp.max_chips, root_node.opp_bet + opp.average_raise_value)
-            root_node.children[2].pot_val = max(min(root_node.pot_val + (root_node.bet_val - root_node.opp_bet), root_node.pot_val + (opp.max_chips - root_node.opp_bet)), root_node.pot_val)
+            root_node.children[1].pot_val = min(root_node.pot_val + (opp.max_chips - root_node.opp_bet), root_node.pot_val + max((root_node.bet_val - root_node.opp_bet), 0) + opp.average_raise_value)
+            root_node.children[1].opp_bet = min(opp.max_chips, max(root_node.bet_val, root_node.opp_bet) + opp.average_raise_value)
+            root_node.children[2].pot_val = max(root_node.pot_val + (min(root_node.bet_val, opp.max_chips) - root_node.opp_bet), root_node.pot_val)
             root_node.children[2].opp_bet = max(min(opp.max_chips, root_node.bet_val), root_node.opp_bet)
             root_node.children[3].pot_val = root_node.pot_val
             root_node.children[3].opp_bet = root_node.opp_bet
 
     root_node.readjustOdds(opp, big_blind)
-    print(root_node.identity + " " + str(root_node.action_route) + " " + str(root_node.odds)+ " " + str(root_node.pot_val) + " " + str(root_node.bet_val))
     for child in root_node.children:
         updateSubTreeOdds(child, maxChips, opp, big_blind)
     return
@@ -319,4 +314,6 @@ if __name__ == "__main__":
     opp.getCallRate()
     opp.getFoldRate()
     updateSubTreeOdds(base_node, 100, opp, False)
+    print(str(base_node.children[0].odds) + " " + str(base_node.children[1].odds))
+    print(str(base_node.children[1].children[1].children[0].odds) + " " + str(base_node.children[1].children[1].children[1].odds))
     print(node_count)
