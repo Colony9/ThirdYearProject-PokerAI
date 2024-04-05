@@ -5,21 +5,21 @@ class OpponentProfile():
         #The 'raise_rate' attribute measures how likely it is that the opponent 
         #will raise, given that the wager value is a certain portion of their chips
         self.allIn_rates = [0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25]
-        self.allIn_coefficients = [0, 0, 0]
+        self.allIn_coefficients = [0, 0, 0.25]
         
         #The 'raise_rate' attribute measures how likely it is that the opponent 
         #will raise, given that the wager value is a certain portion of their chips
         self.raise_rates = [0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25]
-        self.raise_coefficients = [0, 0, 0]
+        self.raise_coefficients = [0, 0, 0.25]
         #The 'fold_rate' attribute measures how likely it is that the opponent
         #will fold, given that the wager value is a certain portion of their chips
         self.fold_rates = [0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25]
-        self.fold_coefficients = [0, 0, 0]
+        self.fold_coefficients = [0, 0, 0.25]
 
         #The 'call_rate' attribute measures how likely it is that the opponent
         #will call/check, given that the wager value is a certain portion of their chips
         self.call_rates = [0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25]
-        self.call_coefficients = [0, 0, 0]
+        self.call_coefficients = [0, 0, 0.25]
 
         #The 'chip_percentage' value stores a list of percentages of the opponent's
         #chips to use to construct lines of best fit.

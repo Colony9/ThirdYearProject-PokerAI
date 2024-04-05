@@ -27,7 +27,7 @@ class Player():
             return
 
         if value >= self.chips:
-            print(self.name + " goes all in")
+            print(self.name + " goes all in (call)")
             self.bet = self.chips
             self.no_more_bets = True
         else:
@@ -40,7 +40,7 @@ class Player():
     def playRaise(self, value):
         self.last_move = "raise"
         if value >= self.chips:
-            print(self.name + " goes all in")
+            print(self.name + " goes all in (raise)")
             self.bet = self.chips
             self.no_more_bets = True
         else:
@@ -269,6 +269,7 @@ class Round():
                 #wager value.
                 opponents = list(self.players)
                 opponents.remove(p)
+                print(str(p.bet) + "/" + str(p.chips))
                 wager_value = p.choice(opponents, wager_value)
                 #If the current player folds, this is tracked.
                 if p.no_more_bets:

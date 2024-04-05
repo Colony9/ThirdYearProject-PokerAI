@@ -6,30 +6,37 @@ from Deck import *
 from HandEvaluation import evaluateAllHands, evaluatePocket
 from SearchTree import *
 from OpponentProfile import OpponentProfile
+import time
 
 class AIPlayer_CFR(Player):
     def __init__(self, name, chips):
         super().__init__(name, chips)
-        self.base_node = TreeNode("base", None, 1.0, 0, 0, 0)
+        self.hand_trees = []
         self.opponent_profile = OpponentProfile(10000)
+        self.round_base_nodes = []
+        self.current_node = None
+        self.base_pot = 0
+        #TODO: Implement opponent action tracker so regrets are calculated
+        #conditioned on opponent behaviour in that round
+        self.opponent_history = []
     
     def assess(self, r):
+        self.base_pot = r.pot
         if len(r.community_cards) == 0:
             pocket_strength = evaluatePocket(self.pocket)
-            if pocket_strength == "0":
-                self.hand_strength = [0, 0, 0]
-                return
-            else:
-                for hand in self.base_node.children:
-                    if pocket_strength == hand.identity:
-                        updateSubTreeOdds(hand, 0, self.opponent_profile, False)
-                        self.round_base_node = hand
-                        return
+            for hand in self.hand_trees:
+                if pocket_strength == hand.identity:
+                    updateSubTreeOdds(hand, 0, self.opponent_profile, False)
+                    self.round_base_nodes.append(hand)
+                    self.current_node = hand
+                    return
                     
-                new_pocket_node = TreeNode(pocket_strength, None, 1.0, 0, 0, 0, parent=self.base_node)
-                self.base_node.children.append(new_pocket_node)
-                self.round_base_node = completeSubTree(new_pocket_node, 7, self.chips, self.opponent_profile, False, 1)
-                return
+            new_pocket_node = TreeNode(pocket_strength, None, 1.0, 0, 0, 0)
+            completeSubTree(new_pocket_node, 7, self.chips, self.opponent_profile, False, 1)
+            self.hand_trees.append(new_pocket_node)
+            self.round_base_nodes.append(new_pocket_node)
+            self.current_node = new_pocket_node               
+            return
             
         self.hand_strength, _ = evaluateAllHands(self.pocket, r.community_cards)
         hand_name = "(" + str(self.hand_strength[0]) + " "
@@ -42,24 +49,71 @@ class AIPlayer_CFR(Player):
         
         hand_name += str(len(r.community_cards)) + ")"
         
-        for hand in self.base_node.children:
+        for hand in self.hand_trees:
             if hand_name == hand.identity:
                 updateSubTreeOdds(hand, 0, self.opponent_profile, False)
-                self.round_base_node = hand
+                self.round_base_nodes.append(hand)
+                self.current_node = hand
                 return
         
         new_hand_node = TreeNode(hand_name, None, 1.0, 0, 0, 0)
-        self.base_node.children.append(new_hand_node)
-        self.round_base_node = completeSubTree(new_hand_node, 7, self.chips, self.opponent_profile, False, 1)
+        completeSubTree(new_hand_node, 7, self.chips, self.opponent_profile, False, 1)
+        self.hand_trees.append(new_hand_node)
+        self.round_base_nodes.append(new_hand_node)
+        self.current_node = new_hand_node
         return
     
     def choice(self, opponents, wager_value):
-        pass
+        print(len(self.round_base_nodes))
+        for i in self.round_base_nodes:
+            print(i.identity)
+        if opponents[0].last_move == "raise":
+            if wager_value == opponents[0].chips:
+                self.opponent_profile.updateAllIn(self.bet, opponents[0].chips)
+                self.current_node = self.current_node.children[0]
+            else:
+                self.opponent_profile.updateRaise(wager_value - self.bet, self.bet, opponents[0].chips)
+                self.current_node = self.current_node.children[1]
+        if opponents[0].last_move == "call":
+            self.opponent_profile.updateCall(self.bet, opponents[0].chips)
+            self.current_node = self.current_node.children[2]
+        
+        decision_val = random.random()
+        raise_high = False
+        for child in self.current_node.children:
+            if decision_val <= child.odds:
+                if child.action_route == "raise":
+                    if child.bet_val == self.current_node.children[1].bet_val:
+                        raise_high = True
+                self.current_node = child
+                decision_type = child.action_route
+                break
+            else:
+                decision_val -= child.odds
+                
+        if decision_type == "all in":
+            wager_value = self.chips
+            self.playRaise(self.chips)
+        elif decision_type == "raise":
+            if raise_high:
+                wager_value = min(self.chips, self.base_pot + opponents[0].bet + wager_value)
+            else:
+                wager_value = min(self.chips, round((self.base_pot + opponents[0].bet) * 0.25) + wager_value)
+            self.playRaise(wager_value)
+        elif decision_type == "call":
+            self.playCall(wager_value)
+        else:
+            self.playFold()
+        
+        return wager_value
     
-    def review(self):
+    def review(self, winner):
+        self.round_base_nodes.clear()
+        self.opponent_history.clear()
         pass
     
 if __name__ == "__main__":
+    start = time.time() 
     test_CFR = AIPlayer_CFR("Test", 10000)
     round_manager = Round([test_CFR], full_deck)
     for i in range(3):
@@ -67,6 +121,8 @@ if __name__ == "__main__":
         round_manager.dealPlayer(test_CFR, 3)
         test_CFR.assess(round_manager)
     
-    for hand in test_CFR.base_node.children:
+    end = time.time()
+    for hand in test_CFR.hand_trees:
         print(hand.identity)
         print(hand.children)
+    print(end - start)

@@ -1,7 +1,9 @@
 from Game import *
 from Deck import *
 from HandEvaluation import renderHand
-from AI_Players import BasicAIPlayers
+import sys
+sys.path.append('AI_Players')
+import BasicAIPlayers, CFRPlayer
 
 def playRound(players):
     round_manager = Round(players, full_deck)
@@ -52,7 +54,9 @@ def playRound(players):
     print("Your hand is: " + renderHand(players[0].hand_strength) + '\n')
     print(players[1].name + "'s cards: " + renderCards(players[1].pocket))
     print(players[1].name + "'s hand is: " + renderHand(players[1].hand_strength))
-    return round_manager.payout()
+    winner = round_manager.payout()
+    players[1].review(winner)
+    return winner
 
     
 
@@ -77,8 +81,10 @@ if __name__ == "__main__":
             opponent = BasicAIPlayers.AIplayer_FoldIfNoPair("COM #4", 10000)
         case 5:
             opponent = BasicAIPlayers.AIplayer_CallUpToHalf("COM #5", 10000)
+        case 6:
+            opponent = CFRPlayer.AIPlayer_CFR("COM #6", 10000)
         case _:
-            opponent = BasicAIPlayers.AIplayer_AlwaysCallOrLowRaise("Always Call", 10000)
+            opponent = CFRPlayer.AIPlayer_CFR("COM #6", 10000)
 
     #rounds = 0
     #rounds_won = 0
@@ -101,8 +107,8 @@ if __name__ == "__main__":
             #print("Rounds tied: " + str(rounds_tied))
             #print("Chips won: " + str(chips_won))
             #break
-        user.chips = 10000
-        opponent.chips = 10000
+        #user.chips = 10000
+        #opponent.chips = 10000
         replay = input("Would you like to play another round? ")
         if len(replay) == 0:
             break
