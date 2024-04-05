@@ -15,11 +15,10 @@ class AIPlayer_CFR(Player):
         self.opponent_profile = OpponentProfile(10000)
         self.round_base_nodes = []
         self.current_node = None
+        self.visited_player_nodes = []
         self.base_pot = 0
-        #TODO: Implement opponent action tracker so regrets are calculated
-        #conditioned on opponent behaviour in that round
-        self.opponent_history = []
-    
+        self.last_wager = [0, 1, False]
+
     def assess(self, r):
         self.base_pot = r.pot
         if len(r.community_cards) == 0:
@@ -30,14 +29,14 @@ class AIPlayer_CFR(Player):
                     self.round_base_nodes.append(hand)
                     self.current_node = hand
                     return
-                    
+
             new_pocket_node = TreeNode(pocket_strength, None, 1.0, 0, 0, 0)
             completeSubTree(new_pocket_node, 7, self.chips, self.opponent_profile, False, 1)
             self.hand_trees.append(new_pocket_node)
             self.round_base_nodes.append(new_pocket_node)
             self.current_node = new_pocket_node               
             return
-            
+
         self.hand_strength, _ = evaluateAllHands(self.pocket, r.community_cards)
         hand_name = "(" + str(self.hand_strength[0]) + " "
         if self.hand_strength[1] < 7:
@@ -46,27 +45,24 @@ class AIPlayer_CFR(Player):
             hand_name += "2 "
         else:
             hand_name += "3 "
-        
+
         hand_name += str(len(r.community_cards)) + ")"
-        
+
         for hand in self.hand_trees:
             if hand_name == hand.identity:
                 updateSubTreeOdds(hand, 0, self.opponent_profile, False)
                 self.round_base_nodes.append(hand)
                 self.current_node = hand
                 return
-        
+
         new_hand_node = TreeNode(hand_name, None, 1.0, 0, 0, 0)
         completeSubTree(new_hand_node, 7, self.chips, self.opponent_profile, False, 1)
         self.hand_trees.append(new_hand_node)
         self.round_base_nodes.append(new_hand_node)
         self.current_node = new_hand_node
         return
-    
+
     def choice(self, opponents, wager_value):
-        print(len(self.round_base_nodes))
-        for i in self.round_base_nodes:
-            print(i.identity)
         if opponents[0].last_move == "raise":
             if wager_value == opponents[0].chips:
                 self.opponent_profile.updateAllIn(self.bet, opponents[0].chips)
@@ -76,8 +72,12 @@ class AIPlayer_CFR(Player):
                 self.current_node = self.current_node.children[1]
         if opponents[0].last_move == "call":
             self.opponent_profile.updateCall(self.bet, opponents[0].chips)
-            self.current_node = self.current_node.children[2]
-        
+            if len(self.current_node.children) != 4:
+                self.current_node = self.current_node.children[0]
+            else:
+                self.current_node = self.current_node.children[2]
+
+        self.visited_player_nodes.append(self.current_node)
         decision_val = random.random()
         raise_high = False
         for child in self.current_node.children:
@@ -90,7 +90,7 @@ class AIPlayer_CFR(Player):
                 break
             else:
                 decision_val -= child.odds
-                
+
         if decision_type == "all in":
             wager_value = self.chips
             self.playRaise(self.chips)
@@ -104,14 +104,37 @@ class AIPlayer_CFR(Player):
             self.playCall(wager_value)
         else:
             self.playFold()
-        
+
+        self.last_wager = [wager_value, opponents[0].chips, self.current_node.identity == "opponent"]
+
         return wager_value
-    
-    def review(self, winner):
+
+    def review(self, winner, opp_folded, big_blind):
+        if opp_folded:
+            self.opponent_profile.updateFold(self.last_wager[0], self.last_wager[1])
+        elif self.last_wager[2]:
+            self.opponent_profile.updateCall(self.last_wager[0], self.last_wager[1])
+        self.last_wager = [0, 1]
+
+        won = 0
+        if winner == self.name:
+            won = 1
+        elif winner is None:
+            won = 0.5
+
+        for c in self.round_base_nodes:
+            calculateRoundResults(c, won, big_blind)
+        for node in self.visited_player_nodes:
+            if node.identity != "player":
+                continue
+
+            for c in range(len(node.children)):
+                node.regret_values[c] += max(0, node.children[c].value - node.value)
+        self.visited_player_nodes.clear()
+        for c in self.round_base_nodes:
+            clearTreeValues(c)
         self.round_base_nodes.clear()
-        self.opponent_history.clear()
-        pass
-    
+
 if __name__ == "__main__":
     start = time.time() 
     test_CFR = AIPlayer_CFR("Test", 10000)

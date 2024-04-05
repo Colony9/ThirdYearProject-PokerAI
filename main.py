@@ -55,12 +55,30 @@ def playRound(players):
     print(players[1].name + "'s cards: " + renderCards(players[1].pocket))
     print(players[1].name + "'s hand is: " + renderHand(players[1].hand_strength))
     winner = round_manager.payout()
-    players[1].review(winner)
+    players[0].review(winner, players[1].folded, True)
+    players[1].review(winner, players[0].folded, False)
+    
+    for p in players:
+        p.hand_strength = [0, 0, 0]
+        p.folded = False
+        p.no_more_bets = False
+        p.pocket.clear()
+    
     return winner
 
-    
+def CFR_output(CFR_AI):
+    hand_tree_list = []
+    for tree in CFR_AI.hand_trees:
+        hand_tree_list.append(tree.identity)
+    print("Hand Trees: " + str(hand_tree_list))
+    print("Opponent Average Raise: " + str(CFR_AI.opponent_profile.average_raise_value))
+    print("Opponent all in rates: " + str(CFR_AI.opponent_profile.allIn_rates))
+    print("Opponent raise rates: " + str(CFR_AI.opponent_profile.raise_rates))
+    print("Opponent call rates: " + str(CFR_AI.opponent_profile.call_rates))
+    print("Opponent fold rates: " + str(CFR_AI.opponent_profile.fold_rates))
 
 if __name__ == "__main__":
+    CFR = False
     print("-Lazy Pineapple Hold'em-")
     username = input("Enter your name: ")
     user = humanPlayer(username, 10000)
@@ -82,8 +100,10 @@ if __name__ == "__main__":
         case 5:
             opponent = BasicAIPlayers.AIplayer_CallUpToHalf("COM #5", 10000)
         case 6:
+            CFR = True
             opponent = CFRPlayer.AIPlayer_CFR("COM #6", 10000)
         case _:
+            CFR = True
             opponent = CFRPlayer.AIPlayer_CFR("COM #6", 10000)
 
     #rounds = 0
@@ -111,7 +131,9 @@ if __name__ == "__main__":
         #opponent.chips = 10000
         replay = input("Would you like to play another round? ")
         if len(replay) == 0:
+            CFR_output(opponent)
             break
         elif (replay.lower())[0] != 'y':
+            CFR_output(opponent)
             break
         print("\n------\n\n------\n")

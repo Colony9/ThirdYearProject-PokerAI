@@ -115,26 +115,9 @@ class TreeNode():
                                               self.pot_val, self.bet_val, self.opp_bet, parent=self))
 
     def backPropagate(self):
-        if self.identity == "player":
-            self.calculateRegret()
-        if self.identity == "opponent":
-            self.value = 0
-            for child in self.children:
-                self.value += child.odds * child.value
-        return
-
-
-    def calculateRegret(self):
-        if self.identity != "player":
-            return
-
-        regret_sum = 0
+        self.value = 0
         for child in self.children:
-            regret_sum += child.odds * child.value
-
-        self.value = regret_sum
-        for c in range(len(self.children)):
-            self.regret_values[c] += max(0, self.children[c].value - self.value)
+            self.value += child.odds * child.value
         return
 
     def readjustOdds(self, opp, big_blind):
@@ -297,23 +280,39 @@ def updateSubTreeOdds(root_node, maxChips, opp, big_blind):
         updateSubTreeOdds(child, maxChips, opp, big_blind)
     return
 
+def calculateRoundResults(root_node, won, big_blind):
+    for child in root_node.children:
+        if child.value == None:
+            calculateRoundResults(child, won, big_blind)
+
+    if root_node.identity == "terminal":
+        if root_node.action_route == "fold":
+            if root_node.parent.identity == "player":
+                root_node.value = -1 * root_node.bet_val
+            elif root_node.parent.identity == "opponent":
+                root_node.value = root_node.pot_val
+            else:
+                if big_blind:
+                    root_node.value = -1 * root_node.bet_val
+                else:
+                    root_node.value = root_node.pot_val
+        elif won == 1:
+            root_node.value = root_node.pot_val
+        elif won == 0:
+            root_node.value = -1 * root_node.bet_val
+        else:
+            root_node.value = ((root_node.pot_val + root_node.bet_val) // 2)  - root_node.bet_val
+    else:
+        root_node.backPropagate()
+    return
+
+def clearTreeValues(root_node):
+    root_node.value = None
+    for child in root_node.children:
+        clearTreeValues(child)
+
 if __name__ == "__main__":
-    base_node = TreeNode("(1 1 1)", None, 1.0, 50, 25, 50)
-    opp = OpponentProfile(100)
-    node_count = completeSubTree(base_node, 3, 100, opp, False, 1)
-    base_node.pot_val = 60
-    base_node.children[0].regret_values[0] = 800000000000
-    base_node.children[0].regret_values[1] = 400000000000
-    for i in range(len(opp.allIn_rates)):
-        opp.allIn_rates[i] = 1.0
-        opp.raise_rates[i] = 0.0
-        opp.call_rates[i] = 0.0
-        opp.fold_rates[i] = 0.0
-    opp.getAllInRate()
-    opp.getRaiseRate()
-    opp.getCallRate()
-    opp.getFoldRate()
-    updateSubTreeOdds(base_node, 100, opp, False)
-    print(str(base_node.children[0].odds) + " " + str(base_node.children[1].odds))
-    print(str(base_node.children[1].children[1].children[0].odds) + " " + str(base_node.children[1].children[1].children[1].odds))
-    print(node_count)
+    mini_base_node = TreeNode("(0, 0)", None, 1.0, 0, 0, 0)
+    opp = OpponentProfile(1000)
+    completeSubTree(mini_base_node, 3, 1000, opp, False, 1)
+    calculateRoundResults(mini_base_node, 0, False)

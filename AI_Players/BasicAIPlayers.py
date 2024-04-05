@@ -27,7 +27,7 @@ class AIplayer_Random(Player):
         
         return wager_value
 
-    def review(self, winner):
+    def review(self, winner, opp_folded, big_blind):
         return
 
 #This AI player always calls/checks or raises by 1 chip, regardless of the 
@@ -47,7 +47,7 @@ class AIplayer_AlwaysCallOrLowRaise(Player):
         self.playCall(wager_value)
         return wager_value
 
-    def review(self, winner):
+    def review(self, winner, opp_folded, big_blind):
         return
 
 #This AI players will always bet all of its chips at the flop.  
@@ -64,7 +64,7 @@ class AIplayer_AlwaysAllIn(Player):
         self.playRaise(self.chips)
         return self.chips
 
-    def review(self, winner):
+    def review(self, winner, opp_folded, big_blind):
         return
 
 #This AI player will always call. However, if it doesn't achieve at least a pair
@@ -82,7 +82,7 @@ class AIplayer_FoldIfNoPair(Player):
         self.playCall(wager_value)
         return wager_value
 
-    def review(self, winner):
+    def review(self, winner, opp_folded, big_blind):
         return
 
 #This AI player will always call (or raise by 1) up to half of the chips it starts the round with.
@@ -111,5 +111,5 @@ class AIplayer_CallUpToHalf(Player):
         self.playCall(wager_value)
         return wager_value
 
-    def review(self, winner):
+    def review(self, winner, opp_folded, big_blind):
         return

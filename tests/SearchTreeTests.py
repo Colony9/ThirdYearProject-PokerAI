@@ -104,7 +104,37 @@ class testSearchTree(unittest.TestCase):
         self.assertEqual(self.mini_base_node.children[0].children[0].pot_val, 1500)
         self.assertEqual(self.mini_base_node.children[1].children[1].children[1].children[0].pot_val, 1300)
         self.assertEqual(self.mini_base_node.children[1].children[2].children[1].children[0].pot_val, 850)
-        
-    
+
+    #This test checks that the values for each node are correctly calculated
+    #recursively from their child nodes, weighted by the child node odds.
+    #The value of a node should represent the average winnings from reaching node,
+    #using the current strategy weightings.
+    def testCalculateRoundResults(self):
+        SearchTree.completeSubTree(self.mini_base_node, 3, 2000, self.opp, False, 1)
+        SearchTree.calculateRoundResults(self.mini_base_node, 1, False)
+        self.assertEqual(self.mini_base_node.children[0].value, 500)
+        self.assertEqual(self.mini_base_node.children[3].value, 0)
+        self.assertEqual(self.mini_base_node.value, 214.53125)
+        SearchTree.clearTreeValues(self.mini_base_node)
+        SearchTree.calculateRoundResults(self.mini_base_node, 0, False)
+        self.assertEqual(self.mini_base_node.children[0].value, -500)
+        self.assertEqual(self.mini_base_node.children[3].value, 0)
+        self.assertEqual(self.mini_base_node.value, -262.65625)
+
+    #This method is used to recursively search through the tree and determine
+    #that each node's value has been set to None.
+    def recursiveSearch(self, start_node):
+        self.assertEqual(start_node.value, None)
+        for child in start_node.children:
+            self.recursiveSearch(child)
+
+    #This test checks, using the method 'recursiveSearch', that the 'clearTreeValues'
+    #function correctly sets every node's value to None.
+    def testClearTreeValues(self):
+        SearchTree.calculateRoundResults(self.base_node, 1, False)
+        SearchTree.clearTreeValues(self.base_node)
+        self.recursiveSearch(self.base_node)
+
+
 if __name__ == '__main__':
     unittest.main()

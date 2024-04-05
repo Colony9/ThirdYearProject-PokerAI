@@ -51,6 +51,7 @@ class Player():
     #If a player folds, their wager does not change and they are marked as 
     #having folded.
     def playFold(self):
+        self.last_move = "fold"
         print(self.name + " folds")
         self.folded = True
         self.no_more_bets = True
@@ -65,8 +66,6 @@ class humanPlayer(Player):
     def choice(self, opponents, wager_value):
         while True:
             #A user is input is taken and split into 2 to determine their move.
-            print("Chips: " + str(self.chips - self.bet))
-            print("Current Bet: " + str(self.bet))
             decision = input("What is your move? ").split(None, 2)
             if len(decision) == 0:
                 print("Must input a move")
@@ -139,8 +138,11 @@ class humanPlayer(Player):
                 #If the user inputs something else, it is invalid and rejected.
                 case _:
                     print("Unknown: " + "\'" + str(move) + "\' is not a valid choice")
-        
+
         return wager_value
+    
+    def review(self, winner, opp_folded, big_blind):
+        return
         
 
 #The Round class represents aspects of a game of poker that are not directly
@@ -209,12 +211,6 @@ class Round():
                 elif self.players[0].hand_strength[i] < self.players[1].hand_strength[i]:
                     winner = self.players[1]
                     break
-
-        for p in self.players:
-            self.hand_strength = [0, 0, 0]
-            p.folded = False
-            p.no_more_bets = False
-            p.pocket.clear()
         
         if winner is None:
             print("Tie!")
@@ -269,7 +265,7 @@ class Round():
                 #wager value.
                 opponents = list(self.players)
                 opponents.remove(p)
-                print(str(p.bet) + "/" + str(p.chips))
+                print(p.name + " Current Bet: " + str(p.bet) + "/" + str(p.chips))
                 wager_value = p.choice(opponents, wager_value)
                 #If the current player folds, this is tracked.
                 if p.no_more_bets:
