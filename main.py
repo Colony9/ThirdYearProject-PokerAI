@@ -7,8 +7,10 @@ import BasicAIPlayers, CFRPlayer
 
 def playRound(players):
     round_manager = Round(players, full_deck)
+    start_chips = []
     
     for p in players:
+        start_chips.append(p.chips)
         round_manager.dealPlayer(p, 3)
         p.assess(round_manager)
     print("Your cards: " + renderCards(players[0].pocket))
@@ -54,28 +56,32 @@ def playRound(players):
     print("Your hand is: " + renderHand(players[0].hand_strength) + '\n')
     print(players[1].name + "'s cards: " + renderCards(players[1].pocket))
     print(players[1].name + "'s hand is: " + renderHand(players[1].hand_strength))
-    winner = round_manager.payout()
+    winner = [round_manager.determineWinningHand(), round_manager.payout(), 0]
+    winner[2] = max(players[0].chips - start_chips[0], players[1].chips - start_chips[1])
     players[0].review(winner, players[1].folded, True)
     players[1].review(winner, players[0].folded, False)
-    
+
     for p in players:
         p.hand_strength = [0, 0, 0]
         p.folded = False
         p.no_more_bets = False
         p.pocket.clear()
-    
-    return winner
+
+    return winner[1]
 
 def CFR_output(CFR_AI):
     hand_tree_list = []
     for tree in CFR_AI.hand_trees:
         hand_tree_list.append(tree.identity)
     print("Hand Trees: " + str(hand_tree_list))
-    print("Opponent Average Raise: " + str(CFR_AI.opponent_profile.average_raise_value))
-    print("Opponent all in rates: " + str(CFR_AI.opponent_profile.allIn_rates))
-    print("Opponent raise rates: " + str(CFR_AI.opponent_profile.raise_rates))
-    print("Opponent call rates: " + str(CFR_AI.opponent_profile.call_rates))
-    print("Opponent fold rates: " + str(CFR_AI.opponent_profile.fold_rates))
+    for opp in CFR_AI.opponent_profiles_list:
+        print(CFR_AI.opponent_profiles_list.index(opp))
+        print("Opponent Max Chips: " + str(opp.max_chips))
+        print("Opponent Average Raise: " + str(opp.average_raise_value))
+        print("Opponent all in rates: " + str(opp.allIn_rates))
+        print("Opponent raise rates: " + str(opp.raise_rates))
+        print("Opponent call rates: " + str(opp.call_rates))
+        print("Opponent fold rates: " + str(opp.fold_rates))
 
 if __name__ == "__main__":
     CFR = False

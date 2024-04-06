@@ -79,7 +79,7 @@ class testCFRPlayer(unittest.TestCase):
         self.player.visited_player_nodes = [round_1_node.children[1], round_1_node.children[1].children[1].children[1], round_2_node.children[0]]
         for node in self.player.visited_player_nodes:
             self.assertEqual(node.identity, "player")
-        self.player.review(self.player.name, False, False)
+        self.player.review([self.player, self.player, 10000], False, False)
         self.assertEqual(len(self.player.round_base_nodes), 0)
         self.assertEqual(len(self.player.visited_player_nodes), 0)
         

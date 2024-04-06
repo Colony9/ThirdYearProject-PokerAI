@@ -12,25 +12,31 @@ class AIPlayer_CFR(Player):
     def __init__(self, name, chips):
         super().__init__(name, chips)
         self.hand_trees = []
-        self.opponent_profile = OpponentProfile(10000)
+        self.opponent_profiles_list = [OpponentProfile(10000), OpponentProfile(10000), OpponentProfile(10000), OpponentProfile(10000)]
+        self.opponent_profile = self.opponent_profiles_list[0]
         self.round_base_nodes = []
         self.current_node = None
         self.visited_player_nodes = []
         self.base_pot = 0
-        self.last_wager = [0, 1, False]
+        self.last_wager = [0, 1, 0, False]
 
     def assess(self, r):
+        self.opponent_profile = self.opponent_profiles_list[max(0, len(r.community_cards) - 2)]
         self.base_pot = r.pot
+        if self.base_pot == 75:
+            self.opponent_profile.max_chips = self.opponent_profiles_list[0].max_chips - 50
+        else:
+            self.opponent_profile.max_chips = self.opponent_profiles_list[0].max_chips - self.base_pot // 2
         if len(r.community_cards) == 0:
             pocket_strength = evaluatePocket(self.pocket)
             for hand in self.hand_trees:
                 if pocket_strength == hand.identity:
-                    updateSubTreeOdds(hand, 0, self.opponent_profile, False)
+                    updateSubTreeOdds(hand, self.chips, self.opponent_profile, False)
                     self.round_base_nodes.append(hand)
                     self.current_node = hand
                     return
 
-            new_pocket_node = TreeNode(pocket_strength, None, 1.0, 0, 0, 0)
+            new_pocket_node = TreeNode(pocket_strength, None, 1.0, 50, 25, 50)
             completeSubTree(new_pocket_node, 7, self.chips, self.opponent_profile, False, 1)
             self.hand_trees.append(new_pocket_node)
             self.round_base_nodes.append(new_pocket_node)
@@ -50,12 +56,12 @@ class AIPlayer_CFR(Player):
 
         for hand in self.hand_trees:
             if hand_name == hand.identity:
-                updateSubTreeOdds(hand, 0, self.opponent_profile, False)
+                updateSubTreeOdds(hand, self.chips, self.opponent_profile, False)
                 self.round_base_nodes.append(hand)
                 self.current_node = hand
                 return
 
-        new_hand_node = TreeNode(hand_name, None, 1.0, 0, 0, 0)
+        new_hand_node = TreeNode(hand_name, None, 1.0, self.base_pot, 0, 0)
         completeSubTree(new_hand_node, 7, self.chips, self.opponent_profile, False, 1)
         self.hand_trees.append(new_hand_node)
         self.round_base_nodes.append(new_hand_node)
@@ -105,22 +111,28 @@ class AIPlayer_CFR(Player):
         else:
             self.playFold()
 
-        self.last_wager = [wager_value, opponents[0].chips, self.current_node.identity == "opponent"]
+        self.last_wager = [wager_value, opponents[0].chips, self.opponent_profiles_list.index(self.opponent_profile), self.current_node.identity == "opponent"]
 
         return wager_value
 
     def review(self, winner, opp_folded, big_blind):
+        print(self.last_wager[2])
         if opp_folded:
-            self.opponent_profile.updateFold(self.last_wager[0], self.last_wager[1])
-        elif self.last_wager[2]:
-            self.opponent_profile.updateCall(self.last_wager[0], self.last_wager[1])
-        self.last_wager = [0, 1]
+            self.opponent_profiles_list[self.last_wager[2]].updateFold(self.last_wager[0], self.last_wager[1])
+        elif self.last_wager[3]:
+            self.opponent_profiles_list[self.last_wager[2]].updateCall(self.last_wager[0], self.last_wager[1])
+        self.last_wager = [0, 1, 0, False]
 
         won = 0
-        if winner == self.name:
+        if winner[0].name == self.name:
             won = 1
-        elif winner is None:
+        elif winner[0] is None:
             won = 0.5
+
+        if winner[1].name == self.name:
+            self.opponent_profiles_list[0].max_chips -= winner[2]
+        elif winner[1] != None:
+            self.opponent_profiles_list[0].max_chips += winner[2]
 
         for c in self.round_base_nodes:
             calculateRoundResults(c, won, big_blind)
@@ -134,6 +146,7 @@ class AIPlayer_CFR(Player):
         for c in self.round_base_nodes:
             clearTreeValues(c)
         self.round_base_nodes.clear()
+        self.base_pot = 0
 
 if __name__ == "__main__":
     start = time.time() 

@@ -194,6 +194,18 @@ class Round():
 
         return
     
+    #This method is used to determine which player has the stronger hand at the end of the game
+    def determineWinningHand(self):
+        winner = None
+        for i in range(len(self.players[0].hand_strength)):
+            if self.players[0].hand_strength[i] > self.players[1].hand_strength[i]:
+                winner = self.players[0]
+                break
+            elif self.players[0].hand_strength[i] < self.players[1].hand_strength[i]:
+                winner = self.players[1]
+                break
+        return winner
+
     #At the end of the game, the winning player has the pot's chips added to
     #their own.
     def payout(self):
@@ -204,13 +216,7 @@ class Round():
             winner = self.players[0]    
         
         if winner is None:
-            for i in range(len(self.players[0].hand_strength)):
-                if self.players[0].hand_strength[i] > self.players[1].hand_strength[i]:
-                    winner = self.players[0]
-                    break
-                elif self.players[0].hand_strength[i] < self.players[1].hand_strength[i]:
-                    winner = self.players[1]
-                    break
+            winner = self.determineWinningHand()
         
         if winner is None:
             print("Tie!")
