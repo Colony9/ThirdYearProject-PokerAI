@@ -31,12 +31,13 @@ class AIPlayer_CFR(Player):
             pocket_strength = evaluatePocket(self.pocket)
             for hand in self.hand_trees:
                 if pocket_strength == hand.identity:
+                    hand.pot_val = self.base_pot + 50
                     updateSubTreeOdds(hand, self.chips, self.opponent_profile, False)
                     self.round_base_nodes.append(hand)
                     self.current_node = hand
                     return
 
-            new_pocket_node = TreeNode(pocket_strength, None, 1.0, 50, 25, 50)
+            new_pocket_node = TreeNode(pocket_strength, None, 1.0, 50 + self.base_pot, 25, 50)
             completeSubTree(new_pocket_node, 7, self.chips, self.opponent_profile, False, 1)
             self.hand_trees.append(new_pocket_node)
             self.round_base_nodes.append(new_pocket_node)
@@ -56,6 +57,7 @@ class AIPlayer_CFR(Player):
 
         for hand in self.hand_trees:
             if hand_name == hand.identity:
+                hand.pot_val = self.base_pot
                 updateSubTreeOdds(hand, self.chips, self.opponent_profile, False)
                 self.round_base_nodes.append(hand)
                 self.current_node = hand
@@ -116,7 +118,6 @@ class AIPlayer_CFR(Player):
         return wager_value
 
     def review(self, winner, opp_folded, big_blind):
-        print(self.last_wager[2])
         if opp_folded:
             self.opponent_profiles_list[self.last_wager[2]].updateFold(self.last_wager[0], self.last_wager[1])
         elif self.last_wager[3]:
@@ -124,15 +125,16 @@ class AIPlayer_CFR(Player):
         self.last_wager = [0, 1, 0, False]
 
         won = 0
-        if winner[0].name == self.name:
-            won = 1
-        elif winner[0] is None:
+        if winner[0] is None:
             won = 0.5
+        elif winner[0].name == self.name:
+            won = 1
 
-        if winner[1].name == self.name:
-            self.opponent_profiles_list[0].max_chips -= winner[2]
-        elif winner[1] != None:
-            self.opponent_profiles_list[0].max_chips += winner[2]
+        #if winner[1] != None:
+            #if winner[1].name == self.name:
+                #self.opponent_profiles_list[0].max_chips -= winner[2]
+            #else:
+                #self.opponent_profiles_list[0].max_chips += winner[2]
 
         for c in self.round_base_nodes:
             calculateRoundResults(c, won, big_blind)
@@ -143,8 +145,6 @@ class AIPlayer_CFR(Player):
             for c in range(len(node.children)):
                 node.regret_values[c] += max(0, node.children[c].value - node.value)
         self.visited_player_nodes.clear()
-        for c in self.round_base_nodes:
-            clearTreeValues(c)
         self.round_base_nodes.clear()
         self.base_pot = 0
 
