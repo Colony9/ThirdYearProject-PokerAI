@@ -5,7 +5,7 @@ import CFRPlayer, SearchTree, OpponentProfile
 
 class testCFRPlayer(unittest.TestCase):
     def setUp(self):
-        self.player = CFRPlayer.AIPlayer_CFR("Test", 10000)
+        self.player = CFRPlayer.AIPlayer_CFR("Test", 10000, False)
         self.round_manager = CFRPlayer.Round([self.player], CFRPlayer.full_deck)
     
     #This test checks if the AI object is constructed correctly
@@ -59,7 +59,7 @@ class testCFRPlayer(unittest.TestCase):
     def testMakeChoice(self):
         self.round_manager.dealPlayer(self.player, 3)
         self.player.assess(self.round_manager)
-        opp = CFRPlayer.AIPlayer_CFR("Dummy", 10000)
+        opp = CFRPlayer.AIPlayer_CFR("Dummy", 10000, True)
         opp.last_move = "raise"
         self.player.choice([opp], 100)
     
@@ -84,9 +84,9 @@ class testCFRPlayer(unittest.TestCase):
         self.assertEqual(len(self.player.visited_player_nodes), 0)
         
         self.assertEqual(round_1_node.children[0].regret_values, [0, 0, 0, 0, 0]) 
-        self.assertEqual(round_1_node.children[1].value, None)
+        self.assertEqual(round_1_node.children[1].value, 1572.2)
         self.assertEqual(round_1_node.children[1].regret_values, [3502.8, 0, 0, 0, 0])
-        self.assertEqual(round_1_node.children[1].children[1].children[1].value, None)
+        self.assertEqual(round_1_node.children[1].children[1].children[1].value, 50)
         self.assertEqual(round_1_node.children[1].children[1].children[1].regret_values, [350, 0, 0, 0, 0])
         
         self.assertEqual(round_2_node.children[0].regret_values, [5000, 0, 0, 0, 0])

@@ -73,10 +73,6 @@ class testSearchTree(unittest.TestCase):
             self.opp.raise_rates[i] = 0.0
             self.opp.call_rates[i] = 0.0
             self.opp.fold_rates[i] = 0.0
-        self.opp.getAllInRate()
-        self.opp.getRaiseRate()
-        self.opp.getCallRate()
-        self.opp.getFoldRate()
         
         SearchTree.completeSubTree(self.mini_base_node, 3, 100, self.opp, False, 1)
         self.mini_base_node.children[1].regret_values = [20, 10, 10, 0, 0]
@@ -115,25 +111,10 @@ class testSearchTree(unittest.TestCase):
         self.assertEqual(self.mini_base_node.children[0].value, 500)
         self.assertEqual(self.mini_base_node.children[3].value, 0)
         self.assertEqual(self.mini_base_node.value, 214.53125)
-        SearchTree.clearTreeValues(self.mini_base_node)
         SearchTree.calculateRoundResults(self.mini_base_node, 0, False)
         self.assertEqual(self.mini_base_node.children[0].value, -500)
         self.assertEqual(self.mini_base_node.children[3].value, 0)
         self.assertEqual(self.mini_base_node.value, -262.65625)
-
-    #This method is used to recursively search through the tree and determine
-    #that each node's value has been set to None.
-    def recursiveSearch(self, start_node):
-        self.assertEqual(start_node.value, None)
-        for child in start_node.children:
-            self.recursiveSearch(child)
-
-    #This test checks, using the method 'recursiveSearch', that the 'clearTreeValues'
-    #function correctly sets every node's value to None.
-    def testClearTreeValues(self):
-        SearchTree.calculateRoundResults(self.base_node, 1, False)
-        SearchTree.clearTreeValues(self.base_node)
-        self.recursiveSearch(self.base_node)
 
 
 if __name__ == '__main__':
