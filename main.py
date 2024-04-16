@@ -69,25 +69,35 @@ def playRound(players):
 
     return winner[1]
 
-def CFR_output(CFR_AI):
-    hand_tree_list = []
-    for tree in CFR_AI.hand_trees:
-        hand_tree_list.append(tree.identity)
-    print("Hand Trees: " + str(hand_tree_list))
-    for opp in CFR_AI.opponent_profiles_list:
-        print(CFR_AI.opponent_profiles_list.index(opp))
-        print("Opponent Max Chips: " + str(opp.max_chips))
-        print("Opponent Average Raise: " + str(opp.average_raise_value))
-        print("Opponent all in rates: " + str(opp.allIn_rates))
-        print("Opponent raise rates: " + str(opp.raise_rates))
-        print("Opponent call rates: " + str(opp.call_rates))
-        print("Opponent fold rates: " + str(opp.fold_rates))
+def pretrainCFR(CFR_AI):
+    rounds = 0
+    training_dummy = CFRPlayer.AIPlayer_CFR("Dummy", 10000, CFR_AI.big_blind == False)
+    while True:
+        start_chips = CFR_AI.chips
+        print("round: " + str(rounds + 1))
+        if CFR_AI.big_blind:
+            winner = playRound([CFR_AI, training_dummy])
+        else:
+            winner = playRound([training_dummy, CFR_AI])
+        print(CFR_AI.name + " chips: " + str(CFR_AI.chips))
+        print(training_dummy.name + " chips: " + str(training_dummy.chips) + '\n')
+        rounds += 1
+        if rounds == 10000:
+            break
+        CFR_AI.chips = 10000
+        training_dummy.chips = 10000
+
 
 if __name__ == "__main__":
     CFR = False
     print("-Lazy Pineapple Hold'em-")
     username = input("Enter your name: ")
     user = humanPlayer(username, 10000)
+    #pretrain_decision = input("Would you like to pre-train yourself?")
+    #if len(pretrain_decision) > 0:
+        #if (pretrain_decision.lower())[0] == "y":
+            #pretrainCFR(user)
+
     while True:
         try:
             opponent_type = int(input("Choose opponent: "))
@@ -107,10 +117,18 @@ if __name__ == "__main__":
             opponent = BasicAIPlayers.AIplayer_CallUpToHalf("COM #5", 10000)
         case 6:
             CFR = True
-            opponent = CFRPlayer.AIPlayer_CFR("COM #6", 10000)
+            opponent = CFRPlayer.AIPlayer_CFR("COM #6", 10000, False)
+            pretrain_decision = input("Would you like to pre-train your opponent?")
+            if len(pretrain_decision) > 0:
+                if (pretrain_decision.lower())[0] == "y":
+                    pretrainCFR(opponent)
         case _:
             CFR = True
-            opponent = CFRPlayer.AIPlayer_CFR("COM #6", 10000)
+            opponent = CFRPlayer.AIPlayer_CFR("COM #6", 10000, False)
+            pretrain_decision = input("Would you like to pre-train your opponent?")
+            if len(pretrain_decision) > 0:
+                if (pretrain_decision.lower())[0] == "y":
+                    pretrainCFR(opponent)
 
     #rounds = 0
     #rounds_won = 0
@@ -118,6 +136,7 @@ if __name__ == "__main__":
     #chips_won = 0
     while True:
         start_chips = user.chips
+        #print("round: " + str(rounds + 1))
         winner = playRound([user, opponent])
         print(user.name + " chips: " + str(user.chips))
         print(opponent.name + " chips: " + str(opponent.chips) + '\n')
@@ -129,17 +148,15 @@ if __name__ == "__main__":
         #chips_won += user.chips - start_chips
         #rounds += 1
         #if rounds == 10000:
-            #print("Rounds won: " + str(rounds_won))
-            #print("Rounds tied: " + str(rounds_tied))
+            #print("Rounds won: " + str(rounds_won) + "/10000")
+            #print("Rounds tied: " + str(rounds_tied) + "/10000")
             #print("Chips won: " + str(chips_won))
             #break
         #user.chips = 10000
         #opponent.chips = 10000
         replay = input("Would you like to play another round? ")
         if len(replay) == 0:
-            CFR_output(opponent)
             break
         elif (replay.lower())[0] != 'y':
-            CFR_output(opponent)
             break
         print("\n------\n\n------\n")

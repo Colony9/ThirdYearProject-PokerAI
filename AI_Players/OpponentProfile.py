@@ -27,44 +27,48 @@ class OpponentProfile():
 
         self.max_chips = max_chips
 
-    #This function creates a quadratic line of best fit to estimate the opponents
-    #odds of raising, dependent on the percentage of their chips they are required
-    #to wager to call.
+    #This function creates calculates the percentage of their chips that the
+    #opponent must wager to coninue and then rounds it to the nearest 10% (as 
+    #that is how the rates are measured). Using this, it identifies the relevant 
+    #recorded rate of going all in and returns it.
     def getAllInRate(self, wager):
-        if wager > self.max_chips:
+        if wager > self.max_chips or self.max_chips == 0:
             action_threshold = 10
         else:
             action_threshold = int(round(wager / self.max_chips, 1) / 0.1)
 
         return self.allIn_rates[action_threshold]
 
-    #This function creates a quadratic line of best fit to estimate the opponents
-    #odds of raising, dependent on the percentage of their chips they are required
-    #to wager to call.
+    #This function creates calculates the percentage of their chips that the
+    #opponent must wager to coninue and then rounds it to the nearest 10% (as 
+    #that is how the rates are measured). Using this, it identifies the relevant 
+    #recorded rate of raising and returns it.
     def getRaiseRate(self, wager):
-        if wager > self.max_chips:
+        if wager > self.max_chips or self.max_chips == 0:
             action_threshold = 10
         else:
             action_threshold = int(round(wager / self.max_chips, 1) / 0.1)
 
         return self.raise_rates[action_threshold]
 
-    #This function creates a quadratic line of best fit to estimate the opponents
-    #odds of folding, dependent on the percentage of their chips they are required
-    #to wager to call.
+    #This function creates calculates the percentage of their chips that the
+    #opponent must wager to coninue and then rounds it to the nearest 10% (as 
+    #that is how the rates are measured). Using this, it identifies the relevant 
+    #recorded rate of folding and returns it.
     def getFoldRate(self, wager):
-        if wager > self.max_chips:
+        if wager > self.max_chips or self.max_chips == 0:
             action_threshold = 10
         else:
             action_threshold = int(round(wager / self.max_chips, 1) / 0.1)
 
         return self.fold_rates[action_threshold]
 
-    #This function creates a quadratic line of best fit to estimate the opponents
-    #odds of calling, dependent on the percentage of their chips they are required
-    #to wager to call.
+    #This function creates calculates the percentage of their chips that the
+    #opponent must wager to coninue and then rounds it to the nearest 10% (as 
+    #that is how the rates are measured). Using this, it identifies the relevant 
+    #recorded rate of calling and returns it.
     def getCallRate(self, wager):
-        if wager > self.max_chips:
+        if wager > self.max_chips or self.max_chips == 0:
             action_threshold = 10
         else:
             action_threshold = int(round(wager / self.max_chips, 1) / 0.1)
