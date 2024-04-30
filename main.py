@@ -4,7 +4,10 @@ from HandEvaluation import renderHand
 import sys
 sys.path.append('AI_Players')
 import BasicAIPlayers, CFRPlayer
+from OpponentProfile import OpponentProfile
 
+#This function performs with a full game of Poker with the players it is passed
+#as an argument.
 def playRound(players):
     round_manager = Round(players, full_deck)
     start_chips = []
@@ -69,6 +72,52 @@ def playRound(players):
 
     return winner[1]
 
+#This function performs a full game of Poker, but without the print statements
+#to speed up the training process for the CFR AI.
+def trainRound(players):
+    round_manager = Round(players, full_deck)
+    start_chips = []
+    
+    for p in players:
+        start_chips.append(p.chips)
+        round_manager.dealPlayer(p, 3)
+        p.assess(round_manager)
+    players[0].bet = 50
+    players[1].bet = 25
+    round_manager.bettingRound()
+    round_manager.collectBets()
+
+    round_manager.dealCommunity(3)
+    for p in players:
+        p.assess(round_manager)
+    round_manager.bettingRound()
+    round_manager.collectBets()
+
+    round_manager.dealCommunity(1)
+    for p in players:        
+        p.assess(round_manager)
+    round_manager.bettingRound()
+    round_manager.collectBets()
+    
+    round_manager.dealCommunity(1)
+    for p in players:
+        p.assess(round_manager)
+    round_manager.bettingRound()
+    round_manager.collectBets()
+
+    winner = [round_manager.determineWinningHand(), round_manager.payout(), 0]
+    winner[2] = max(players[0].chips - start_chips[0], players[1].chips - start_chips[1])
+    players[0].review(winner, players[1].folded, True)
+    players[1].review(winner, players[0].folded, False)
+
+    for p in players:
+        p.hand_strength = [0, 0, 0]
+        p.folded = False
+        p.no_more_bets = False
+        p.pocket.clear()
+
+    return winner[1]
+
 def pretrainCFR(CFR_AI):
     rounds = 0
     training_dummy = CFRPlayer.AIPlayer_CFR("Dummy", 10000, CFR_AI.big_blind == False)
@@ -76,16 +125,16 @@ def pretrainCFR(CFR_AI):
         start_chips = CFR_AI.chips
         print("round: " + str(rounds + 1))
         if CFR_AI.big_blind:
-            winner = playRound([CFR_AI, training_dummy])
+            winner = trainRound([CFR_AI, training_dummy])
         else:
-            winner = playRound([training_dummy, CFR_AI])
+            winner = trainRound([training_dummy, CFR_AI])
         print(CFR_AI.name + " chips: " + str(CFR_AI.chips))
         print(training_dummy.name + " chips: " + str(training_dummy.chips) + '\n')
         rounds += 1
-        if rounds == 10000:
-            break
         CFR_AI.chips = 10000
         training_dummy.chips = 10000
+        if rounds == 10000:
+            break
 
 
 if __name__ == "__main__":
@@ -104,39 +153,33 @@ if __name__ == "__main__":
             break
         except:
             print("Invalid option")
-    match opponent_type:
-        case 1:
-            opponent = BasicAIPlayers.AIplayer_Random("COM #1", 10000)
-        case 2:
-            opponent = BasicAIPlayers.AIplayer_AlwaysCallOrLowRaise("COM #2", 10000)
-        case 3:
-            opponent = BasicAIPlayers.AIplayer_AlwaysAllIn("COM #3", 10000)
-        case 4:
-            opponent = BasicAIPlayers.AIplayer_FoldIfNoPair("COM #4", 10000)
-        case 5:
-            opponent = BasicAIPlayers.AIplayer_CallUpToHalf("COM #5", 10000)
-        case 6:
-            CFR = True
-            opponent = CFRPlayer.AIPlayer_CFR("COM #6", 10000, False)
-            pretrain_decision = input("Would you like to pre-train your opponent?")
-            if len(pretrain_decision) > 0:
-                if (pretrain_decision.lower())[0] == "y":
-                    pretrainCFR(opponent)
-        case _:
-            CFR = True
-            opponent = CFRPlayer.AIPlayer_CFR("COM #6", 10000, False)
-            pretrain_decision = input("Would you like to pre-train your opponent?")
-            if len(pretrain_decision) > 0:
-                if (pretrain_decision.lower())[0] == "y":
-                    pretrainCFR(opponent)
+    if opponent_type == 1:
+        opponent = BasicAIPlayers.AIplayer_Random("COM #1", 10000)
+    elif opponent_type == 2:
+        opponent = BasicAIPlayers.AIplayer_AlwaysCallOrLowRaise("COM #2", 10000)
+    elif opponent_type == 3:
+        opponent = BasicAIPlayers.AIplayer_AlwaysAllIn("COM #3", 10000)
+    elif opponent_type == 4:
+        opponent = BasicAIPlayers.AIplayer_FoldIfNoPair("COM #4", 10000)
+    elif opponent_type == 5:
+        opponent = BasicAIPlayers.AIplayer_CallUpToHalf("COM #5", 10000)
+    else:
+        CFR = True
+        opponent = CFRPlayer.AIPlayer_CFR("COM #6", 10000, False)
+        pretrain_decision = input("Would you like to pre-train your opponent?")
+        if len(pretrain_decision) > 0:
+            if (pretrain_decision.lower())[0] == "y":
+                pretrainCFR(opponent)
+                opponent.opponent_profiles_list = [OpponentProfile(10000), OpponentProfile(10000), OpponentProfile(10000), OpponentProfile(10000)]
+                opponent.opponent_profile = opponent.opponent_profiles_list[0]
 
-    #rounds = 0
+    rounds = 0
     #rounds_won = 0
     #rounds_tied = 0
     #chips_won = 0
     while True:
-        start_chips = user.chips
-        #print("round: " + str(rounds + 1))
+        #start_chips = user.chips
+        print("round: " + str(rounds + 1))
         winner = playRound([user, opponent])
         print(user.name + " chips: " + str(user.chips))
         print(opponent.name + " chips: " + str(opponent.chips) + '\n')
@@ -146,8 +189,8 @@ if __name__ == "__main__":
         #else:
             #rounds_tied += 1
         #chips_won += user.chips - start_chips
-        #rounds += 1
-        #if rounds == 10000:
+        rounds += 1
+        #if rounds == 5:
             #print("Rounds won: " + str(rounds_won) + "/10000")
             #print("Rounds tied: " + str(rounds_tied) + "/10000")
             #print("Chips won: " + str(chips_won))
@@ -156,7 +199,7 @@ if __name__ == "__main__":
         #opponent.chips = 10000
         replay = input("Would you like to play another round? ")
         if len(replay) == 0:
-            break
+           break
         elif (replay.lower())[0] != 'y':
             break
         print("\n------\n\n------\n")

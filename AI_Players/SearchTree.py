@@ -1,30 +1,45 @@
 from OpponentProfile import OpponentProfile
 
+#This class represents a single node within a search tree.
 class TreeNode():
     def __init__(self, identity, action_route, odds, pot_value, bet_value, opp_bet_value, parent=None):
+        #The identity attribute represents the type of node this is ('Player',
+        #'Opponent' or 'Terminal')
         self.identity = identity
+        #The action route attribute represents the type of decision ('raise',
+        #'call', or 'fold') that is used to reach this node
         self.action_route = action_route
         self.value = None
+        #The parent and children attributes denotes which nodes are directly connected to
+        #this node by an edge.
         self.parent = parent
         self.children = []
 
+        
         self.odds = odds
         self.regret_values = []
         for i in range(5):
             self.regret_values.append(0)
+        #These attributes are used to estimate the winnings/losses at the end
+        #of a game.
         self.pot_val = pot_value
         self.bet_val = bet_value
         self.opp_bet = opp_bet_value
 
     def expandChildren(self, maxChips, opp, big_blind):
+        #A terminal node doesn't have any children.
         if self.identity == "terminal":
             return
         elif self.identity == "player":
+            #If the opponent went all in, the AI can only choose to call or
+            #fold.
             if self.action_route == "all in":
                 self.children.append(TreeNode("terminal", "call", 0.5, 
                                               self.pot_val, min(maxChips, opp.max_chips), self.opp_bet, parent=self))
                 self.children.append(TreeNode("terminal", "fold", 0.5, 
                                               self.pot_val, self.bet_val, self.opp_bet, parent=self))
+            #If the opponent raised, or called on the first turn, the range of
+            #actions available to the player is unrestricted.
             elif self.action_route == "raise" or self.parent.action_route == None:
                 self.children.append(TreeNode("opponent", "all in", 0.2, 
                                               self.pot_val, maxChips, self.opp_bet, parent=self))
@@ -37,19 +52,25 @@ class TreeNode():
                 self.children.append(TreeNode("terminal", "fold", 0.2, 
                                               self.pot_val, self.bet_val, self.opp_bet, parent=self))
 
+            #The AI isn't permitted to re-raise and there is no benefit to 
+            #folding over checking so it should always choose to check.
             elif self.action_route == "call":
-                #The AI isn't permitted to re-raise and there is no benefit to 
-                #folding over checking.
                 self.children.append(TreeNode("terminal", "call", 1.0, 
                                               self.pot_val, self.bet_val, self.opp_bet, parent=self))
         elif self.identity == "opponent":
+            #The method obtains probabilities for each action at the current 
+            #betting value from the 'Opponent Profile' object.
             allIn_rate = opp.getAllInRate(self.bet_val)
             raise_rate = opp.getRaiseRate(self.bet_val)
             call_rate = opp.getCallRate(self.bet_val)
             fold_rate = opp.getFoldRate(self.bet_val)
 
             if self.action_route == "all in":
+                #The probabilities are calculated as a proportion of the total odds
+                #for the available legal actions.
                 total_rate = call_rate + fold_rate
+                #If the AI has never called or folded so far, they are set to
+                #equally likely to avoid a division by 0.
                 if total_rate == 0:
                     call_odds = 0.5
                     fold_odds = 0.5
@@ -62,6 +83,9 @@ class TreeNode():
                                               self.bet_val, min(opp.max_chips, self.bet_val), parent=self))
                 self.children.append(TreeNode("terminal", "fold", fold_odds,
                                               self.pot_val, self.bet_val, self.opp_bet, parent=self))
+            #If the AI raised, or called on the first turn, the range of
+            #actions available to the opponent is unrestricted from its 
+            #four abstracted choices.
             elif self.action_route == "raise" or self.parent.action_route == None:
                 self.children.append(TreeNode("player", "all in", allIn_rate,
                                               self.pot_val + (opp.max_chips - self.opp_bet), self.bet_val, opp.max_chips, parent=self))
@@ -73,10 +97,15 @@ class TreeNode():
                                               self.bet_val, max(min(opp.max_chips, self.bet_val), self.opp_bet), parent=self))
                 self.children.append(TreeNode("terminal", "fold", fold_rate,
                                               self.pot_val, self.bet_val, self.opp_bet, parent=self))
+                
+            #As there is no benefit to folding in this situation, the opponent
+            #will check.
             elif self.action_route == "call":
                 self.children.append(TreeNode("terminal", "call", 1.0, 
                                               self.pot_val, self.bet_val, self.opp_bet, parent=self))
         else:
+            #If the AI is the big blind, the root node functions as a 'Player'
+            #node with no restrictions.
             if big_blind:
                 self.children.append(TreeNode("opponent", "all in", 0.2, 
                                               self.pot_val, maxChips, self.opp_bet, parent=self))
@@ -87,7 +116,9 @@ class TreeNode():
                 self.children.append(TreeNode("opponent", "call", 0.2, 
                                               self.pot_val, max(min(maxChips, self.opp_bet), self.bet_val), self.opp_bet, parent=self))
                 self.children.append(TreeNode("terminal", "fold", 0.2, 
-                                              self.pot_val, self.bet_val, self.opp_bet, parent=self))
+                                             self.pot_val, self.bet_val, self.opp_bet, parent=self))
+
+            #Otherwise, it functions as an 'Opponent' node with no restrictions.
             else:
                 allIn_rate = opp.getAllInRate(0)
                 raise_rate = opp.getRaiseRate(0)
@@ -104,6 +135,8 @@ class TreeNode():
                 self.children.append(TreeNode("terminal", "fold", fold_rate,
                                               self.pot_val, self.bet_val, self.opp_bet, parent=self))
 
+    #The value of the parent node is equal to the sum of its child nodes' values 
+    #multiplied by their odds
     def backPropagate(self):
         self.value = 0
         for child in self.children:
@@ -111,6 +144,7 @@ class TreeNode():
         return
 
     def readjustOdds(self, opp, big_blind):
+        #The od
         if self.identity == "player":
             normalisation_factor = 0
             for regret in self.regret_values:
@@ -122,6 +156,9 @@ class TreeNode():
             for c in range(len(self.children)):
                 self.children[c].odds = self.regret_values[c] / normalisation_factor
 
+        #The odds for the children of an opponent are assigned using the appropriate
+        #value from the 'Opponent Profile' object, similar to how it is done during
+        #construction.
         elif self.identity == "opponent":
             allIn_rate = opp.getAllInRate(self.bet_val)
             raise_rate = opp.getRaiseRate(self.bet_val)
@@ -157,7 +194,9 @@ class TreeNode():
             self.children[3].odds = fold_rate
             
 
-
+#This function recursively expands a search tree until it reaches the depth limit.
+#Any 'Player' nodes at the bottom of the tree get expanded with only the choices
+#to call or fold as that will end the betting round.
 def completeSubTree(root_node, depth_limit, maxChips, opp, big_blind, node_count):
     if depth_limit == 0:
         if root_node.identity == "player":
@@ -187,6 +226,10 @@ def completeSubTree(root_node, depth_limit, maxChips, opp, big_blind, node_count
         node_count = completeSubTree(child, depth_limit - 1, maxChips, opp, big_blind, node_count)
     return node_count
 
+#This function recursively navigates through the tree, updating its odds based 
+#on either its 'regret values' or the 'Opponent Profile' object. It also
+#updates the pot value and bet value based on the 'Opponent Profile's new 
+#average raise value.
 def updateSubTreeOdds(root_node, maxChips, opp, big_blind):
     if root_node.identity == "player":
         for child in root_node.children:
@@ -256,6 +299,9 @@ def updateSubTreeOdds(root_node, maxChips, opp, big_blind):
         updateSubTreeOdds(child, maxChips, opp, big_blind)
     return
 
+#At the end of a round, this function assigns a value to each terminal node 
+#(representing how the AI would win/lose if it reached that node) before backpropagating
+#it to calculate the average expected winnings at each node.
 def calculateRoundResults(root_node, won, big_blind):
     for child in root_node.children:
         calculateRoundResults(child, won, big_blind)
@@ -280,9 +326,3 @@ def calculateRoundResults(root_node, won, big_blind):
     else:
         root_node.backPropagate()
     return
-
-if __name__ == "__main__":
-    mini_base_node = TreeNode("(0, 0)", None, 1.0, 0, 0, 0)
-    opp = OpponentProfile(1000)
-    completeSubTree(mini_base_node, 3, 1000, opp, False, 1)
-    calculateRoundResults(mini_base_node, 0, False)
