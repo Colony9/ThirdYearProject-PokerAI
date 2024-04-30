@@ -104,6 +104,111 @@ class testHandEvaluator(unittest.TestCase):
         self.community = [(2, "Spades"), (5, "Hearts"), (3, "Clubs"), (7, "Diamonds"), (14, "Spades")]
         testHand, _ = evaluateAllHands(self.pocket, self.community)
         self.assertEqual(testHand, (3, 2, 14))
-    
+
+    #The following tests test the 'evaluatePocket' function used for the CFR AI
+
+    #A pocket with no discernable growth into a strong hand should be rejected
+    #and not played.
+    def testWeakPocket(self):
+        self.pocket = [(3, 'Hearts'), (7, 'Clubs'), (2, 'Diamonds')]
+        result = evaluatePocket(self.pocket)
+        self.assertEqual(result, "(0, 0)")
+
+    #A matching pair (of significant enough value) should be returned.
+    def testPocketPair(self):
+        self.pocket = [(6, 'Hearts'), (12, 'Clubs'), (12, 'Diamonds')]
+        result = evaluatePocket(self.pocket)
+        self.assertEqual(result, "((12, 'Diamonds'), (12, 'Clubs'))")
+
+    #A pair of the lowest value (2), shouldn't be considered due to it being too
+    #weak compared to other possible pockets.
+    def testWeakPair(self):
+        self.pocket = [(2, 'Hearts'), (2, 'Clubs'), (12, 'Diamonds')]
+        result = evaluatePocket(self.pocket)
+        self.assertEqual(result, "(0, 0)")
+
+    #A set of two cards with equal suits and consecutive values should be accepted.
+    def testSuitedAdjacency(self):
+        self.pocket = [(9, 'Hearts'), (8, 'Hearts'), (2, 'Diamonds')]
+        result = evaluatePocket(self.pocket)
+        self.assertEqual(result, "((9, 'Hearts'), (8, 'Hearts'))")
+
+    #If the consecutive values are too small, the combination shouldn't be accepted.
+    def testWeakSuitedAdjacency(self):
+        self.pocket = [(2, 'Hearts'), (3, 'Diamonds'), (4, 'Diamonds')]
+        result = evaluatePocket(self.pocket)
+        self.assertEqual(result, "(0, 0)")
+
+    #If both cards share a suit, and one card is an ace, the combination should
+    #be accepted.
+    def testSuitedAce(self):
+        self.pocket = [(2, 'Spades'),  (7, 'Diamonds'), (14, 'Spades')]
+        result = evaluatePocket(self.pocket)
+        self.assertEqual(result, "((14, 'Spades'), (2, 'Spades'))")
+
+    #If both cards share a suit, and one card is a king while the other has a
+    #value of at least 8, the combination should be accepted.
+    def testValidSuitedKing(self):
+        self.pocket = [(2, 'Spades'),  (8, 'Diamonds'), (13, 'Diamonds')]
+        result = evaluatePocket(self.pocket)
+        self.assertEqual(result, "((13, 'Diamonds'), (8, 'Diamonds'))")
+
+    #If both cards share a suit, and one card is a king while the other has a
+    #value of less than 8, the combination shouldn't be accepted.
+    def testInvalidSuitedKing(self):
+        self.pocket = [(2, 'Spades'),  (7, 'Diamonds'), (13, 'Diamonds')]
+        result = evaluatePocket(self.pocket)
+        self.assertEqual(result, "(0, 0)")
+
+    #If both cards share a suit, and one card is a queen while the other has a
+    #value of at least 9, the combination should be accepted.
+    def testValidSuitedQueen(self):
+        self.pocket = [(2, 'Spades'),  (9, 'Diamonds'), (12, 'Diamonds')]
+        result = evaluatePocket(self.pocket)
+        self.assertEqual(result, "((12, 'Diamonds'), (9, 'Diamonds'))")
+
+    #If both cards share a suit, and one card is a queen while the other has a
+    #value of less than 9, the combination shouldn't be accepted.
+    def testInvalidSuitedQueen(self):
+        self.pocket = [(2, 'Spades'),  (8, 'Diamonds'), (12, 'Diamonds')]
+        result = evaluatePocket(self.pocket)
+        self.assertEqual(result, "(0, 0)")
+
+    #If both cards share a suit, and one card is a jack while the other has a
+    #value of at least 9, the combination should be accepted.
+    def testValidSuitedJack(self):
+        self.pocket = [(2, 'Spades'),  (9, 'Diamonds'), (11, 'Diamonds')]
+        result = evaluatePocket(self.pocket)
+        self.assertEqual(result, "((11, 'Diamonds'), (9, 'Diamonds'))")
+
+    #If both cards share a suit, and one card is a jack while the other has a
+    #value of less than 9, the combination shouldn't be accepted.
+    def testInvalidSuitedJack(self):
+        self.pocket = [(2, 'Spades'),  (8, 'Diamonds'), (11, 'Diamonds')]
+        result = evaluatePocket(self.pocket)
+        self.assertEqual(result, "(0, 0)")
+
+    #If a combination of two cards don't share either a suit or value, it
+    #should only be accepted if either both cards have values greater than or
+    #equal to a jack, or one card is an ace while the other is a 10.
+    def testValidUnsuitedPocket(self):
+        self.pocket = [(2, 'Spades'),  (11, 'Clubs'), (13, 'Diamonds')]
+        result = evaluatePocket(self.pocket)
+        self.assertEqual(result, "((13, 'Diamonds'), (11, 'Clubs'))")
+        self.pocket = [(2, 'Spades'),  (10, 'Clubs'), (14, 'Hearts')]
+        result = evaluatePocket(self.pocket)
+        self.assertEqual(result, "((14, 'Hearts'), (10, 'Clubs'))")
+
+    #If all three combinations in a pocket fail to meet the requirements of the
+    #above test, it should be rejected.
+    def testInvalidUnsuitedPocket(self):
+        self.pocket = [(2, 'Spades'),  (6, 'Clubs'), (4, 'Diamonds')]
+        result = evaluatePocket(self.pocket)
+        self.assertEqual(result, "(0, 0)")
+        self.pocket = [(2, 'Spades'),  (10, 'Clubs'), (13, 'Hearts')]
+        result = evaluatePocket(self.pocket)
+        self.assertEqual(result, "(0, 0)")
+
+
 if __name__ == '__main__':
     unittest.main()
